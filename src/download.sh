@@ -1,0 +1,342 @@
+## @file
+## @brief Manage repositories data download interactions
+
+help_download() {
+  cat - <<EOH
+Download options:
+  --package      Name of a package to download
+  --package-file FILE
+                 Path to a file containing a list of desired packages
+  --group        Name of a group whose packages should be downloaded
+  --history NUM  How many versions of a package should be downloaded if more
+                   than one is available (defaults to 1)
+  --[no-](modules|groups|resolve|rpm)
+                 Whether a specific repository data type should be loaded or
+                   not (defaults to true)
+  --download-repos REPOS
+                 Comma/space-separated list of repositories to download
+                   packages from (resolution is always against all enabled
+                   repositories)
+  --repo-subdirectory REPO_DIR
+                 Path to move to when downloading data of a repository
+                   (defaults to the repository's name) 
+  --rpm-subdirectory DIR
+                 Directory where downloaded RPMs should be stored (from REPO_DIR)
+  --resolved-rpms-file FILE
+                 Where the list of resolved RPMs versions should be stored
+  -k|--keep      Keep resolve RPMs dependencies file
+
+EOH
+}
+
+init_download() {
+  DOWNLOAD_MODULES=0
+  DOWNLOAD_GROUPS=0
+  DOWNLOAD_RESOLVE=0
+  DOWNLOAD_RPMS=0
+  
+  DOWNLOAD_INTERMEDIATE_RESOLUTION_FILE=
+  DOWNLOAD_KEEP_INTERMEDIATE_RESOLUTION_FILE=1
+
+  DOWNLOAD_REPOS=( )
+  DOWNLOAD_REPO_SUBDIRECTORY_DEFAULT="%s"
+  DOWNLOAD_REPO_SUBDIRECTORY=
+  DOWNLOAD_RPM_SUBDIRECTORY_DEFAULT="rpms"
+  DOWNLOAD_RPM_SUBDIRECTORY=
+  DOWNLOAD_MODULES_FILE_DEFAULT="modules.yaml"
+  DOWNLOAD_MODULES_FILE=
+  DOWNLOAD_GROUPS_FILE_DEFAULT="comps.xml"
+  DOWNLOAD_GROUPS_FILE=
+  DOWNLOAD_OLD_VERSION_LIMIT=1
+  
+  DOWNLOAD_PACKAGE_LIST_FILES=( )
+  DOWNLOAD_PACKAGE_LIST=( )
+  DOWNLOAD_GROUP_LIST=( )
+}
+
+parse_args_download() {
+  case "$1" in
+    --modules)
+      DOWNLOAD_MODULES=0
+      return 1
+      ;;
+    --no-modules)
+      DOWNLOAD_MODULES=1
+      return 1
+      ;;
+    --groups)
+      DOWNLOAD_GROUPS=0
+      return 1
+      ;;
+    --no-groups)
+      DOWNLOAD_GROUPS=1
+      return 1
+      ;;
+    --resolve)
+      DOWNLOAD_RESOLVE=0
+      return 1
+      ;;
+    --no-resolve)
+      DOWNLOAD_RESOLVE=1
+      return 1
+      ;;
+    --rpm)
+      DOWNLOAD_RPMS=0
+      return 1
+      ;;
+    --no-rpm)
+      DOWNLOAD_RPMS=1
+      return 1
+      ;;
+    --download-repos)
+      local download_repo_buffer
+      IFS=' ' read -r -a download_repo_buffer <<<"${2//,/ }"
+      DOWNLOAD_REPOS+=( "${download_repo_buffer[@]}" )
+      return 2
+      ;;
+    --repo-subdirectory)
+      DOWNLOAD_REPO_SUBDIRECTORY="${2:-.}"
+      return 2
+      ;;
+    --rpm-subdirectory)
+      DOWNLOAD_RPM_SUBDIRECTORY="${2:-.}"
+      return 2
+      ;;
+    -k|--keep)
+      DOWNLOAD_KEEP_INTERMEDIATE_RESOLUTION_FILE=0
+      return 1
+      ;;
+    --resolved-rpms-file)
+      DOWNLOAD_INTERMEDIATE_RESOLUTION_FILE="$2"
+      return 2
+      ;;
+    --package-file)
+      DOWNLOAD_PACKAGE_LIST_FILES+=( "$2" )
+      return 2
+      ;;
+    --package)
+      DOWNLOAD_PACKAGE_LIST+=( "$2" )
+      return 2
+      ;;
+    --group)
+      DOWNLOAD_GROUP_LIST+=( "$2" )
+      return 2
+      ;;
+    --history)
+      DOWNLOAD_OLD_VERSION_LIMIT="$2"
+      return 2
+      ;;
+  esac
+  return 0
+}
+
+post_parse_download() {
+  DOWNLOAD_RPM_SUBDIRECTORY="${DOWNLOAD_RPM_SUBDIRECTORY:-${DOWNLOAD_RPM_SUBDIRECTORY_DEFAULT}}"
+  DOWNLOAD_REPO_SUBDIRECTORY="${DOWNLOAD_REPO_SUBDIRECTORY:-${DOWNLOAD_REPO_SUBDIRECTORY_DEFAULT}}"
+  DOWNLOAD_MODULES_FILE="${DOWNLOAD_MODULES_FILE:-$DOWNLOAD_MODULES_FILE_DEFAULT}"
+  DOWNLOAD_GROUPS_FILE="${DOWNLOAD_GROUPS_FILE:-$DOWNLOAD_GROUPS_FILE_DEFAULT}"
+
+  if ! test "$DOWNLOAD_OLD_VERSION_LIMIT" -gt 0; then
+    set_parse_error "The old version limit must be a positive number (received ${DOWNLOAD_OLD_VERSION_LIMIT})"
+  fi
+}
+
+main_download() {
+  local repolist
+  local tmp_file
+
+  repolist=( "${DOWNLOAD_REPOS[@]}" )
+  if test "${#repolist[@]}" -eq 0; then
+    echo "Listing locally enabled repositories"
+    read -r -d '\n' -a repolist <<<"$(get_repo_list)"
+  fi
+
+  # Build the list of RPMs we want to download (if any)
+  if test "$DOWNLOAD_RPMS" -eq 0 || test "$DOWNLOAD_RESOLVE" -eq 0; then
+    tmp_file="$(realpath "${DOWNLOAD_INTERMEDIATE_RESOLUTION_FILE:-$(TMPDIR=. mktemp --suffix .downloader)}")"
+    echo "Building Packages list into $tmp_file"
+    # Print all desired packages in this section so that they are used in the parsed command
+    {
+      if test "${#DOWNLOAD_PACKAGE_LIST_FILES[@]}" -eq 0 && test "${#DOWNLOAD_PACKAGE_LIST[@]}" -eq 0 && test "${#DOWNLOAD_GROUP_LIST[@]}" -eq 0; then
+        # If no package or group was configured, get all available rpms
+        echo '*'
+      else
+        if test "${#DOWNLOAD_PACKAGE_LIST_FILES[@]}" -ne 0; then
+          cat -- "${DOWNLOAD_PACKAGE_LIST_FILES[@]}"
+        fi
+        if test "${#DOWNLOAD_PACKAGE_LIST[@]}" -ne 0; then
+          printf "%s\n" "${DOWNLOAD_PACKAGE_LIST[@]}"
+        fi
+        if test "${#DOWNLOAD_GROUP_LIST[@]}" -ne 0; then
+          get_dnf_group_packages all "${DOWNLOAD_GROUP_LIST[@]}"
+        fi
+      fi
+    } | get_resolved_packages_list >"$tmp_file"
+  fi
+
+  for repo in "${repolist[@]}"; do
+    local repo_path
+    # shellcheck disable=SC2059
+    repo_path="$(printf "$DOWNLOAD_REPO_SUBDIRECTORY" "$repo")"
+    test -d "$repo_path" || mkdir -p "$repo_path"
+    echo "Download packages for repository ${repo}"
+    pushd "$repo_path" >/dev/null || continue
+    {
+      if test "$DOWNLOAD_RPMS" -eq 0; then
+        local rpm_dir
+        # shellcheck disable=SC2059
+        rpm_dir="$(printf "$DOWNLOAD_RPM_SUBDIRECTORY" "$repo")"
+        test -d "$rpm_dir" || mkdir -p "$rpm_dir"
+        download_rpms "$rpm_dir" "$repo" <"$tmp_file"
+      fi
+
+      if test "$DOWNLOAD_MODULES" -eq 0; then
+        local module_path
+        local module_dir
+        # shellcheck disable=SC2059
+        module_path="$(printf "$DOWNLOAD_MODULES_FILE" "$repo")"
+        module_dir="$(dirname "$module_path")"
+        test -d "$module_dir" || mkdir -p "$module_dir"
+        local repo_module_content
+        if repo_module_content="$(get_repo_modules "$repo")"; then
+          cat - <<<"$repo_module_content" > "$module_path"
+        fi
+      fi
+
+      if test "$DOWNLOAD_GROUPS" -eq 0; then
+        local group_path
+        local group_dir
+        # shellcheck disable=SC2059
+        group_path="$(printf "$DOWNLOAD_GROUPS_FILE" "$repo")"
+        group_dir="$(dirname "$group_path")"
+        test -d "$group_dir" || mkdir -p "$group_dir"
+        local repo_group_content
+        if repo_group_content="$(get_repo_groups "$repo")"; then
+          cat - <<<"$repo_group_content" > "$group_path"
+        fi
+      fi
+    }
+    popd >/dev/null || fatal "Failed to move out of $(pwd)" 3
+  done
+
+  if test "$DOWNLOAD_KEEP_INTERMEDIATE_RESOLUTION_FILE" -ne 0 && { test "$DOWNLOAD_RPMS" -eq 0 || test "$DOWNLOAD_RESOLVE" -eq 0; }; then 
+    rm -f "$tmp_file"
+  fi
+}
+
+## @fn get_resolved_packages_list()
+## @brief Prints the resolved names of packages and their dependencies
+## @param < A list of packages to resolve
+## @return > A list of resolved packages and dependencies
+get_resolved_packages_list() {
+  local package_list
+  package_list="$(xargs -r dnf -q repoquery --latest-limit 1 --)"
+
+  {
+    cat - <<<"$package_list"
+    cat - <<<"$package_list" | xargs -r dnf -q repoquery --requires --resolve --recursive --
+  } | sort -n | uniq
+}
+
+## @fn get_repo_list()
+## @brief Prints a list of enabled repositories on the system
+## @return > A list of enabled repositories
+get_repo_list() {
+  # Use awk to drop the header line and only print repo names
+  dnf -q repolist | awk -e '{if(NR>1)print$1}'
+}
+
+## @fn download_rpms(destination, ...)
+## @brief Downloads the packages received as an input stream from the repositories received as parameters
+## @param destination Directory where RPMs should bs saved (defaults to .)
+## @param ... The repositories to download from (all if not provided)
+## @param $< A list of packages to download (one per line)
+download_rpms() {
+  local destdir="${1:-.}"
+  shift
+  local additionnal_parameters=()
+  if test "$#" -gt 0; then
+    for repo in "$@"; do
+	  additionnal_parameters+=( --repo "$repo" )
+	done
+  fi
+
+  xargs -r dnf -q download --destdir "$destdir" -y  "${additionnal_parameters[@]}" --skip-broken -- 2>/dev/null
+}
+
+## @fn get_repo_modules(repo_name)
+## @brief Prints a repository's module information after loading it from cache
+## @param repo_name The name of the repository whose modules should be extracted from cache
+## @return
+##   $> The module's content
+##   $>&2 Any invalid module file found (most likely to be due to an internal error)
+##   0 if a module file was found, else 1
+get_repo_modules() {
+  local repo_name="$1"
+  local repo_path
+  repo_path="$(get_repo_cache_path "$repo_name")"
+  local module_paths=()
+
+  # FIXME: Should use an xml parser such as xmllint or xmlstarlet if available instead of an awk expression
+  # shellcheck disable=SC2016
+  local module_search_awk_exp='/<data type="modules">/{module=1} /<location/{if(module==1){print$2;module=0}}'
+  IFS=' ' read -r -a module_paths <<<"$( <"${repo_path}/repodata/repomd.xml" awk -F \" -e "$module_search_awk_exp" )"
+
+
+  local module_file
+  for module_file in "${module_paths[@]}"; do
+    # We only support the .yaml.gz extension, test for it here
+    case "$module_file" in
+      *.yaml.gz)
+        gunzip -kc "${repo_path}/${module_file}"
+        return 0
+        ;;
+      *)
+        echo "Found unsupported module file ${module_file}" >&2
+        ;;
+    esac
+  done
+  return 1
+}
+
+## @fn get_repo_groups(repo_name)
+## @brief Prints a repository's group information after loading it from cache
+## @param repo_name The name of the repository whose groups should be extracted from cache
+## @return
+##   $> The groups' informations
+##   $>&2 Any invalid group file found (most likely to be due to an internal error)
+##   0 If a group file was found, else 1
+get_repo_groups() {
+  local repo_name="$1"
+  local repo_path
+  repo_path="$(get_repo_cache_path "$repo_name")"
+  local group_paths=()
+
+  # FIXME: Should use an xml parser such as xmllint or xmlstarlet if available instead of an awk expression
+  # shellcheck disable=SC2016
+  local group_search_awk_exp='/<data type="group(_gz)?">/{module=1} /<location/{if(module==1){print$2;module=0}}'
+  IFS=' ' read -r -a group_paths <<<"$( <"${repo_path}/repodata/repomd.xml" awk -F \" -e "$group_search_awk_exp") )"
+
+  local group_file
+  for group_file in "${group_paths[@]}"; do
+    # Ensure that we appropriatly handle the file found
+    if ! test -f "${repo_path}/${group_file}"; then
+      echo "Could not find group file in cache: ${group_file}" >&2
+      continue
+    fi
+    case "$group_file" in
+      *.xml)
+        cat "${repo_path}/${group_file}"
+        return 0
+        ;;
+      *.xml.gz)
+        gunzip -kc "${repo_path}/${group_file}"
+        return 0
+        ;;
+      *)
+        echo "Found unsupported group file ${group_file}" >&2
+        ;;
+    esac
+  done
+  return 1
+}

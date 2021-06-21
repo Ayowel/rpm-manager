@@ -1,0 +1,6 @@
+[submodule "vendors/shell-utilities"]
+	path = vendors/shell-utilities
+	url = https://github.com/Ayowel/shell-utilities.git
+[submodule "vendors/bash-doxygen"]
+	path = vendors/bash-doxygen
+	url = https://github.com/Anvil/bash-doxygen.git
