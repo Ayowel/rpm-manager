@@ -22,6 +22,9 @@ package: build-scripts licenses
 quick-package: build-scripts licenses
 	tar -czf rpm-manager.tar.gz -C build .
 
+doc-package: doc
+	tar -czf rpm-manager-doc.tar.gz --sort=name --owner=root:0 --group=root:0 --mtime='UTC 2021-01-01' -C docs .
+
 build-scripts: build build/rpm-manager
 
 build-rpm:
