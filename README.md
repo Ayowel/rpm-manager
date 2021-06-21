@@ -8,11 +8,24 @@ If you can afford to make a full repository clone and do not care about knowing 
 
 ## Usage
 
+### From a repository checkout
+
 ```bash
 # Download all packages from all enabled local repositories
 ./main.sh download
 # Download package 'bash' and its dependencies in 'rpms' directory
 ./main.sh -R rpms download --package bash
+```
+
+### From a release
+
+After downloading the release package and unpacking it in the path, you may start to use `rpm-manager` from anywhere on your system.
+
+```bash
+# Download all packages from all enabled local repositories
+rpm-manager download
+# Download package 'bash' and its dependencies in 'rpms' directory
+rpm-manager -R rpms download --package bash
 ```
 
 ## Set-up an environment
