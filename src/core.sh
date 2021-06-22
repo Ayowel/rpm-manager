@@ -6,6 +6,8 @@
 help() {
   cat - <<EOH
 usage: $0 download
+       $0 group list GROUP...
+       $0 group packages GROUP...
 
 Core options:
   -h|--help      Display this help message
@@ -33,7 +35,7 @@ init() {
   PRINT_HELP=1
   VERBOSE=1
 
-  MODE_SOURCES=( groups download consolidate )
+  MODE_SOURCES=( group download consolidate )
   SELECTED_MODE=
   TARGET_DIRECTORY=
 
@@ -41,6 +43,7 @@ init() {
     "init_${init_sources}"
   done
 
+  # Ensure that dnf's output stays consistent accross environments
   LANG=C.UTF-8
   export LANG
 }
@@ -73,7 +76,7 @@ parse_args() {
   esac
   local retVal=0
   case "$SELECTED_MODE" in
-    groups|download|consolidate)
+    group|download|consolidate)
       "parse_args_${SELECTED_MODE}" "$@"
       retVal=$?
       ;;

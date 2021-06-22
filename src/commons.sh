@@ -47,6 +47,4 @@ run_from_dir() {
   }
   popd >/dev/null || return 1
   return "$retval"
-  
-  
 }
