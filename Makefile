@@ -8,7 +8,7 @@ clean:
 	rm -rf build docs rpm-manager.tar.gz
 
 doc:
-	doxygen Doxyfile
+	doxygen tools/Doxyfile
 
 audit:
 	shellcheck --shell bash main.sh src/*

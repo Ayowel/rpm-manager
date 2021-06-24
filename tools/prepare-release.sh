@@ -7,6 +7,6 @@ fi
 
 version_number="$1"
 
-sed -i -e "s/^\\(PROJECT_NUMBER\\s*=\\s*\\).*\$/\\1${version_number}/" Doxyfile
+sed -i -e "s/^\\(PROJECT_NUMBER\\s*=\\s*\\).*\$/\\1${version_number}/" tools/Doxyfile
 sed -i -e "0,/^## .*$/s//## Version ${version_number}/" CHANGELOG.md 
 sed -i -e "s/\\(VERSION_NUMBER=\\).*$/\\1${version_number}/g" src/core.sh
