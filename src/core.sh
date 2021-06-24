@@ -31,11 +31,19 @@ EOH
   fi
 }
 
+## @fn version()
+## @brief Prints the version number
+version() {
+  echo "v${VERSION_NUMBER}"
+}
+
 ## @fn init()
 ## @brief Initialize the execution environments and global variables defaults
 init() {
   PRINT_HELP=1
+  PRINT_VERSION=1
   VERBOSE=1
+  VERSION_NUMBER=0.1.0
 
   MODE_SOURCES=( group download consolidate )
   SELECTED_MODE=
@@ -66,6 +74,10 @@ parse_args() {
       ;;
     -h|--help)
       PRINT_HELP=0
+      return 1
+      ;;
+    --version)
+      PRINT_VERSION=0
       return 1
       ;;
     -v|--verbose)
@@ -143,6 +155,10 @@ function main() {
 
   if test "$PRINT_HELP" -eq 0; then
     help
+    return 0
+  fi
+  if test "$PRINT_VERSION" -eq 0; then
+    version
     return 0
   fi
   get_first_parse_error >&1

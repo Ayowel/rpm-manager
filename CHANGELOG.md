@@ -10,6 +10,7 @@ Add group and consolidate commands for download preparation and post-treatment
 * Add group and module merge commands (see `rpm-manager consolidate -h`)
 * Add xmllint support for download (requires --xpath support)
 * Add `--use-xmllint` and `--use-awk` commands to enforce new or legacy xml parsing
+* Add `--version` flag
 
 ### Fixes
 
