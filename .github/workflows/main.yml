@@ -24,11 +24,14 @@ jobs:
       - name: Doc
         run: make doc-package
       - name: Build
-        run: make package
+        run: |
+          make package
+          awk -e '/^## /{a+=1} {if(a==1)print$0}' CHANGELOG.md >CHANGELOG.release.md
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
+          body_path: CHANGELOG.release.md
           files: |
             rpm-manager.tar.gz
             rpm-manager-doc.tar.gz
