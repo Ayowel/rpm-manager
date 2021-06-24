@@ -11,7 +11,7 @@ doc:
 	doxygen Doxyfile
 
 audit:
-	shellcheck --shell bash main.sh --source-path src
+	shellcheck --shell bash main.sh src/*
 
 package: build-scripts licenses
 	find build/licenses -type f -exec chmod 644 {} \;
