@@ -1,6 +1,8 @@
 ## @file
 ## @brief Manage repositories data download interactions
 
+## @fn help_download()
+## @copydoc help()
 help_download() {
   cat - <<EOH
 Download options:
@@ -29,6 +31,8 @@ Download options:
 EOH
 }
 
+## @fn init_download()
+## @copydoc init()
 init_download() {
   DOWNLOAD_MODULES=0
   DOWNLOAD_GROUPS=0
@@ -39,7 +43,7 @@ init_download() {
   DOWNLOAD_KEEP_INTERMEDIATE_RESOLUTION_FILE=1
 
   DOWNLOAD_REPOS=( )
-  DOWNLOAD_REPO_SUBDIRECTORY_DEFAULT="%s"
+  DOWNLOAD_REPO_SUBDIRECTORY_DEFAULT="%{REPO}"
   DOWNLOAD_REPO_SUBDIRECTORY=
   DOWNLOAD_RPM_SUBDIRECTORY_DEFAULT="rpms"
   DOWNLOAD_RPM_SUBDIRECTORY=
@@ -54,6 +58,8 @@ init_download() {
   DOWNLOAD_GROUP_LIST=( )
 }
 
+## @fn parse_args_download()
+## @copydoc parse_args()
 parse_args_download() {
   case "$1" in
     --modules)
@@ -111,7 +117,7 @@ parse_args_download() {
       return 2
       ;;
     --package-file)
-      DOWNLOAD_PACKAGE_LIST_FILES+=( "$2" )
+      DOWNLOAD_PACKAGE_LIST_FILES+=( "$(realpath "$2")" )
       return 2
       ;;
     --package)
@@ -130,6 +136,8 @@ parse_args_download() {
   return 0
 }
 
+## @fn post_parse_download()
+## @copydoc post_parse()
 post_parse_download() {
   DOWNLOAD_RPM_SUBDIRECTORY="${DOWNLOAD_RPM_SUBDIRECTORY:-${DOWNLOAD_RPM_SUBDIRECTORY_DEFAULT}}"
   DOWNLOAD_REPO_SUBDIRECTORY="${DOWNLOAD_REPO_SUBDIRECTORY:-${DOWNLOAD_REPO_SUBDIRECTORY_DEFAULT}}"
@@ -141,6 +149,8 @@ post_parse_download() {
   fi
 }
 
+## @fn main_download()
+## @copydoc main()
 main_download() {
   local repolist
   local tmp_file
@@ -176,25 +186,23 @@ main_download() {
 
   for repo in "${repolist[@]}"; do
     local repo_path
-    # shellcheck disable=SC2059
-    repo_path="$(printf "$DOWNLOAD_REPO_SUBDIRECTORY" "$repo")"
+    repo_path="${DOWNLOAD_REPO_SUBDIRECTORY//%\{REPO\}/$repo}"
     test -d "$repo_path" || mkdir -p "$repo_path"
     echo "Download packages for repository ${repo}"
     pushd "$repo_path" >/dev/null || continue
     {
       if test "$DOWNLOAD_RPMS" -eq 0; then
         local rpm_dir
-        # shellcheck disable=SC2059
-        rpm_dir="$(printf "$DOWNLOAD_RPM_SUBDIRECTORY" "$repo")"
+        rpm_dir="${DOWNLOAD_RPM_SUBDIRECTORY//%\{REPO\}/$repo}"
         test -d "$rpm_dir" || mkdir -p "$rpm_dir"
+        echo "Start download for repo $repo"
         download_rpms "$rpm_dir" "$repo" <"$tmp_file"
       fi
 
       if test "$DOWNLOAD_MODULES" -eq 0; then
         local module_path
         local module_dir
-        # shellcheck disable=SC2059
-        module_path="$(printf "$DOWNLOAD_MODULES_FILE" "$repo")"
+        module_path="${DOWNLOAD_MODULES_FILE//%\{REPO\}/$repo}"
         module_dir="$(dirname "$module_path")"
         test -d "$module_dir" || mkdir -p "$module_dir"
         local repo_module_content
@@ -206,8 +214,7 @@ main_download() {
       if test "$DOWNLOAD_GROUPS" -eq 0; then
         local group_path
         local group_dir
-        # shellcheck disable=SC2059
-        group_path="$(printf "$DOWNLOAD_GROUPS_FILE" "$repo")"
+        group_path="${DOWNLOAD_GROUPS_FILE//%\{REPO\}/$repo}"
         group_dir="$(dirname "$group_path")"
         test -d "$group_dir" || mkdir -p "$group_dir"
         local repo_group_content
@@ -226,7 +233,7 @@ main_download() {
 
 ## @fn get_resolved_packages_list()
 ## @brief Prints the resolved names of packages and their dependencies
-## @param < A list of packages to resolve
+## @note < A list of packages to resolve
 ## @return > A list of resolved packages and dependencies
 get_resolved_packages_list() {
   local package_list
@@ -246,11 +253,11 @@ get_repo_list() {
   dnf -q repolist | awk -e '{if(NR>1)print$1}'
 }
 
-## @fn download_rpms(destination, ...)
+## @fn download_rpms()
 ## @brief Downloads the packages received as an input stream from the repositories received as parameters
 ## @param destination Directory where RPMs should bs saved (defaults to .)
 ## @param ... The repositories to download from (all if not provided)
-## @param $< A list of packages to download (one per line)
+## @note $< A list of packages to download (one per line)
 download_rpms() {
   local destdir="${1:-.}"
   shift
@@ -260,7 +267,7 @@ download_rpms() {
 	  additionnal_parameters+=( --repo "$repo" )
 	done
   fi
-
+realpath "$destdir"
   xargs -r dnf -q download --destdir "$destdir" -y  "${additionnal_parameters[@]}" --skip-broken -- 2>/dev/null
 }
 
@@ -277,11 +284,7 @@ get_repo_modules() {
   repo_path="$(get_repo_cache_path "$repo_name")"
   local module_paths=()
 
-  # FIXME: Should use an xml parser such as xmllint or xmlstarlet if available instead of an awk expression
-  # shellcheck disable=SC2016
-  local module_search_awk_exp='/<data type="modules">/{module=1} /<location/{if(module==1){print$2;module=0}}'
-  IFS=' ' read -r -a module_paths <<<"$( <"${repo_path}/repodata/repomd.xml" awk -F \" -e "$module_search_awk_exp" )"
-
+  IFS=' ' read -r -a module_paths <<<"$(get_repodata_data_relative_location modules <"${repo_path}/repodata/repomd.xml")"
 
   local module_file
   for module_file in "${module_paths[@]}"; do
@@ -289,6 +292,10 @@ get_repo_modules() {
     case "$module_file" in
       *.yaml.gz)
         gunzip -kc "${repo_path}/${module_file}"
+        return 0
+        ;;
+      *.yaml.xz)
+        xz -kcd "${repo_path}/${module_file}"
         return 0
         ;;
       *)
@@ -299,29 +306,76 @@ get_repo_modules() {
   return 1
 }
 
-## @fn get_repo_groups(repo_name)
+## @fn get_repodata_data_relative_location_awk()
+## @copydoc get_repodata_data_relative_location()
+## @see get_repodata_data_relative_location()
+## @private
+get_repodata_data_relative_location_awk() {
+  local target_types="$1"
+  while test "$#" -gt 1; do
+    shift
+    target_types+="|${1}"
+  done
+  # shellcheck disable=SC2016
+  local group_search_awk_exp='/<data type="'"${target_types}"'">/{module=1} /<location/{if(module==1){print$2;module=0}}'
+  awk -F \" -e "$group_search_awk_exp"
+}
+
+## @fn get_repodata_data_relative_location_xmllint()
+## @copydoc get_repodata_data_relative_location()
+## @see get_repodata_data_relative_location()
+## @private
+get_repodata_data_relative_location_xmllint() {
+  # Drop namespaces from input files
+  local repomd_content
+  repomd_content="$(sed -Ee 's/\sxmlns(:[^=]*)?="[^"]*"//g')"
+  for target_item in "$@"; do
+    <<<"$repomd_content" xmllint --xpath "string(/repomd/data[@type=\"${target_item}\"]/location/@href)" -
+    # Add newline after match
+    echo
+  done
+}
+
+## @fn get_repodata_data_relative_location()
+## @brief Extract the location of a repodata file
+## @param types... Repodata attributes whose locations should be extracted
+## @note
+##   * $< The input file's content
+##   * $> The extracted locations
+get_repodata_data_relative_location() {
+  local used_filter
+
+  # If xmllint is available on the system, use it
+  if test "${USE_XMLLINT:-1}" -eq 0 || { test "${USE_AWK:-1}" -ne 0 && type xmllint >/dev/null 2>&1; }; then
+    used_filter=get_repodata_data_relative_location_xmllint
+  else
+    used_filter=get_repodata_data_relative_location_awk
+  fi
+
+  "$used_filter" "$@"
+}
+
+## @fn get_repo_groups()
 ## @brief Prints a repository's group information after loading it from cache
 ## @param repo_name The name of the repository whose groups should be extracted from cache
 ## @return
-##   $> The groups' informations
-##   $>&2 Any invalid group file found (most likely to be due to an internal error)
-##   0 If a group file was found, else 1
+##   * $> The groups' informations
+##   * $>&2 Any invalid group file found (most likely to be due to an internal error)
+##   * 0 If a group file was found, else 1
 get_repo_groups() {
   local repo_name="$1"
   local repo_path
   repo_path="$(get_repo_cache_path "$repo_name")"
-  local group_paths=()
+  local group_paths=
 
-  # FIXME: Should use an xml parser such as xmllint or xmlstarlet if available instead of an awk expression
-  # shellcheck disable=SC2016
-  local group_search_awk_exp='/<data type="group(_gz)?">/{module=1} /<location/{if(module==1){print$2;module=0}}'
-  IFS=' ' read -r -a group_paths <<<"$( <"${repo_path}/repodata/repomd.xml" awk -F \" -e "$group_search_awk_exp") )"
+  group_paths="$(get_repodata_data_relative_location group group_gz <"${repo_path}/repodata/repomd.xml")"
 
   local group_file
-  for group_file in "${group_paths[@]}"; do
+  local files_not_found=( )
+  for group_file in $group_paths; do # We want the 'in' part to split on spaces
     # Ensure that we appropriatly handle the file found
     if ! test -f "${repo_path}/${group_file}"; then
-      echo "Could not find group file in cache: ${group_file}" >&2
+      files_not_found+=( "$group_file" )
       continue
     fi
     case "$group_file" in
@@ -338,5 +392,9 @@ get_repo_groups() {
         ;;
     esac
   done
+
+  if test "${#files_not_found[@]}" -gt 0; then
+      echo "Could not find group file(s) in cache:" "${files_not_found[@]}" >&2
+  fi
   return 1
 }
