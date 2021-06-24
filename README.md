@@ -1,5 +1,7 @@
 # RPM Download Helper tool
 
+[![Release number](https://shields.io/github/v/release/Ayowel/rpm-manager)](https://github.com/Ayowel/rpm-manager/releases/latest) [![Worflow status](https://shields.io/github/workflow/status/Ayowel/rpm-manager/Main)](https://github.com/Ayowel/rpm-manager/actions)
+
 ## Introduction
 
 This tool enables the full or partial download of enabled repositories' content while keeping track of the original repository's source.
