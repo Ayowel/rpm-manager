@@ -107,7 +107,6 @@ main_consolidate() {
   case "$CONSOLIDATE_TARGET_TYPE" in
     group)
       consolidate_groups "${CONSOLIDATE_SOURCE_PATHS_VALIDATED[@]}" >&3
-      echo done
       ;;
     module)
       consolidate_modules "${CONSOLIDATE_SOURCE_PATHS_VALIDATED[@]}" >&3

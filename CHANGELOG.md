@@ -1,6 +1,6 @@
 # Changelog
 
-## Release candidate
+## Version 0.2.0
 
 Add group and consolidate commands for download preparation and post-treatment
 
