@@ -8,6 +8,8 @@ help() {
 usage: $0 download
        $0 group list GROUP...
        $0 group packages GROUP...
+       $0 consolidate group -o group.xml GROUP_PATH...
+       $0 consolidate module -o module.yaml MODULE_PATH...
 
 Core options:
   -h|--help      Display this help message
@@ -39,13 +41,16 @@ init() {
   SELECTED_MODE=
   TARGET_DIRECTORY=
 
+  # Which parser to use when extracting information from xml files
+  USE_XMLLINT=
+  USE_AWK=
+
   for init_sources in "${MODE_SOURCES[@]}"; do
     "init_${init_sources}"
   done
 
-  # Ensure that dnf's output stays consistent accross environments
-  LANG=C.UTF-8
-  export LANG
+  ## Stabilize dnf's output by explicitly setting its locale
+  export LANG=C.UTF-8
 }
 
 ## @fn parse_args(option, parameter, flag)
@@ -66,6 +71,16 @@ parse_args() {
     -v|--verbose)
       VERBOSE=0
       return 1
+      ;;
+    --use-awk)
+      # Set globally for valorisation in dependant scripts 
+      # shellcheck disable=SC2034
+      USE_AWK=0
+      ;;
+    --use-xmllint)
+      # Set globally for valorisation in dependant scripts 
+      # shellcheck disable=SC2034
+      USE_XMLLINT=0
       ;;
     '')
       if test -z "$SELECTED_MODE"; then

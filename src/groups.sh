@@ -1,6 +1,8 @@
 ## @file
 ## @brief Extract informations from groups
 
+## @fn help_group()
+## @copydoc help()
 help_group() {
   cat - <<EOH
 Group commands:
@@ -16,6 +18,8 @@ Group options:
 EOH
 }
 
+## @fn init_group()
+## @copydoc init()
 init_group() {
   # Base variables
   GROUP_CURRENT_MODE=
@@ -28,6 +32,8 @@ init_group() {
   GROUP_VALID_GROUP_TYPES=( all self mandatory optional )
 }
 
+## @fn parse_args_group()
+## @copydoc parse_args()
 parse_args_group() {
   case "$1" in
     --package-type|-P)
@@ -62,6 +68,8 @@ parse_args_group() {
   return 0
 }
 
+## @fn post_parse_group()
+## @copydoc post_parse()
 post_parse_group() {
   # Set default values
   if test "${#GROUP_PACKAGE_TYPES[@]}" -eq 0; then
@@ -72,6 +80,11 @@ post_parse_group() {
   fi
 
   # Validate parameters
+  if test -z "$GROUP_CURRENT_MODE"; then
+    # No command selected, abort
+    set_parse_error "A command must be used with group"
+  fi
+
   local type
   for type in "${GROUP_PACKAGE_TYPES[@]}"; do
     local valid_type
@@ -96,6 +109,8 @@ post_parse_group() {
   return 0
 }
 
+## @fn main_group()
+## @copydoc main()
 main_group() {
   local groups=( "${GROUP_TARGET_LIST[@]}" )
   if test "${#groups[@]}" -eq 0; then

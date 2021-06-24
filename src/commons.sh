@@ -1,18 +1,18 @@
 ## @file
 ## @brief Simple utility functions used in other scripts
 
-## @fn set_parse_error(message)
+## @fn set_parse_error()
 ## @brief Record that an error occured
 ## @param message Error message to print later
 set_parse_error() {
   FIRST_PARSE_ERROR="${FIRST_PARSE_ERROR:-$1}"
 }
 
-## @fn first_parse_error()
+## @fn get_first_parse_error()
 ## @brief Print the first error that occured
 ## @return
-##   $> The error message
-##   1 if a message was printed, else 0
+##   * > The error message
+##   * 1 if a message was printed, else 0
 get_first_parse_error() {
   if test -n "$FIRST_PARSE_ERROR"; then
     echo "$FIRST_PARSE_ERROR"
@@ -21,7 +21,8 @@ get_first_parse_error() {
   return 0
 }
 
-## @fn get_repo_cache_path(repo_name)
+## @fn get_repo_cache_path()
+## @brief Returns the path to the local metadata folder for a repository
 ## @param repo_name Name of the repository whose cache path should be discovered
 get_repo_cache_path() {
   local repo_name="$1"
@@ -31,10 +32,10 @@ get_repo_cache_path() {
   find /var/cache/dnf -mindepth 1 -maxdepth 1 -type d -name "${repo_name}-????????????????" ! -name "${repo_name}-*-*" | head -1
 }
 
-## @fn run_from_dir(directory, command...)
+## @fn run_from_dir()
 ## @brief Run a command from a directory
 ## @param directory The directory to run from
-## @param ... The command to execute
+## @param command... The command to execute
 ## @return 0 If no error occured
 run_from_dir() {
   local target="$1"
