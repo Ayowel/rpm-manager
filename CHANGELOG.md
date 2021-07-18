@@ -1,11 +1,11 @@
 # Changelog
 
-## Release candidate
+## Version 0.2.1
 
 ### Fixes
 
 * Fix an error that made using --group in download mode inoperative
-* Fix error printing on fatal errors
+* Fix a print issue on fatal errors
 
 ## Version 0.2.0
 
