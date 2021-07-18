@@ -178,7 +178,7 @@ main_download() {
           printf "%s\n" "${DOWNLOAD_PACKAGE_LIST[@]}"
         fi
         if test "${#DOWNLOAD_GROUP_LIST[@]}" -ne 0; then
-          get_dnf_group_packages all "${DOWNLOAD_GROUP_LIST[@]}"
+          get_dnf_group_packages all all "${DOWNLOAD_GROUP_LIST[@]}"
         fi
       fi
     } | get_resolved_packages_list >"$tmp_file"

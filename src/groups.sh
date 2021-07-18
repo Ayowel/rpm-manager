@@ -129,7 +129,7 @@ main_group() {
   esac
 }
 
-## @fn get_base_groups(expected_types, ...)
+## @fn get_dnf_base_groups(expected_types, ...)
 ## @brief Prints the packages for the groups received as parameters
 ## @param expected_types A space-separated list of expected group types to print (between all, self, mandatory, and optional)
 ## @param ... The groups whose packages should be extracted
@@ -171,7 +171,7 @@ get_dnf_base_groups() {
   dnf -q group info "$@" | awk -e "$awk_group_extractor" | sort | uniq
 }
 
-## @fn get_group_packages(group_type, package_type, ...)
+## @fn get_dnf_group_packages(group_type, package_type, ...)
 ## @brief Prints the packages for the groups received as parameters
 ## @param group_type A space-separated list of expected group types to print (between all, self, mandatory, and optional)
 ## @param package_type A space-separated list of expected package types to print (between all, default, mandatory, and optional)

@@ -1,5 +1,12 @@
 # Changelog
 
+## Release candidate
+
+### Fixes
+
+* Fix an error that made using --group in download mode inoperative
+* Fix error printing on fatal errors
+
 ## Version 0.2.0
 
 Add group and consolidate commands for download preparation and post-treatment
