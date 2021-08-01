@@ -1,6 +1,6 @@
 # Changelog
 
-## Release Candidate
+## Version 0.3.0
 
 ### Breaking changes
 
