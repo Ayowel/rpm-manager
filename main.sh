@@ -1,9 +1,12 @@
 #!/bin/bash
 
+## START shell-utilities code inclusion
+## This code is under MIT license
 # shellcheck disable=SC1091
 source vendors/shell-utilities/src/commons.sh
 # shellcheck disable=SC1091
 source vendors/shell-utilities/src/argument_parser.sh
+## END shell-utilities code inclusion
 
 source src/commons.sh
 source src/groups.sh
