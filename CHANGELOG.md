@@ -1,5 +1,11 @@
 # Changelog
 
+## Release Candidate
+
+### Features
+
+* [DEV] Start adding unit tests
+
 ## Version 0.3.0
 
 ### Breaking changes

@@ -18,9 +18,15 @@ jobs:
         with:
           submodules: true
       - name: Install
-        run: sudo apt-get install -y shellcheck doxygen
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y make shellcheck kcov bats doxygen
       - name: Tests
         run: make audit
+      - name: Save coverage
+        uses: codecov/codecov-action@v1
+        with:
+          fail_ci_if_error: false
       - name: Doc
         run: make doc-package
       - name: Build

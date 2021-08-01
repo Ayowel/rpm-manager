@@ -1,3 +1,5 @@
 /build
+/coverage
 /docs
 /rpm-manager*.tar.gz
+
