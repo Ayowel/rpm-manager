@@ -1,5 +1,11 @@
 # Changelog
 
+## Release Candidate
+
+### Breaking changes
+
+* Licensing update from GPLv3 to LGPLv3
+
 ## Version 0.2.1
 
 ### Fixes
