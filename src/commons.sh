@@ -32,6 +32,22 @@ get_repo_cache_path() {
   find /var/cache/dnf -mindepth 1 -maxdepth 1 -type d -name "${repo_name}-????????????????" ! -name "${repo_name}-*-*" | head -1
 }
 
+## @fn print_resource_by_path(path)
+## @brief Prints-out the content of a file
+## @param path The file's URI or path
+print_resource_by_path() {
+  local path="$1"
+
+  # Detect if this is a local or remote file
+  if test -e "$path"; then
+    cat "$path"
+  elif grep -qE '^https?://' <<<"$path"; then
+    curl -s "$path"
+  else
+    return 1
+  fi
+}
+
 ## @fn run_from_dir()
 ## @brief Run a command from a directory
 ## @param directory The directory to run from

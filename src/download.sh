@@ -12,7 +12,7 @@ Download options:
   --group        Name of a group whose packages should be downloaded
   --history NUM  How many versions of a package should be downloaded if more
                    than one is available (defaults to 1)
-  --[no-](modules|groups|resolve|rpm)
+  --[no-](modules|gpgkeys|groups|resolve|rpm)
                  Whether a specific repository data type should be loaded or
                    not (defaults to true)
   --download-repos REPOS
@@ -35,6 +35,7 @@ EOH
 ## @copydoc init()
 init_download() {
   DOWNLOAD_MODULES=0
+  DOWNLOAD_GPGKEYS=0
   DOWNLOAD_GROUPS=0
   DOWNLOAD_RESOLVE=0
   DOWNLOAD_RPMS=0
@@ -49,6 +50,8 @@ init_download() {
   DOWNLOAD_RPM_SUBDIRECTORY=
   DOWNLOAD_MODULES_FILE_DEFAULT="modules.yaml"
   DOWNLOAD_MODULES_FILE=
+  DOWNLOAD_GPG_FILE_DEFAULT='gpgkey'
+  DOWNLOAD_GPG_FILE=
   DOWNLOAD_GROUPS_FILE_DEFAULT="comps.xml"
   DOWNLOAD_GROUPS_FILE=
   DOWNLOAD_OLD_VERSION_LIMIT=1
@@ -68,6 +71,14 @@ parse_args_download() {
       ;;
     --no-modules)
       DOWNLOAD_MODULES=1
+      return 1
+      ;;
+    --gpgkeys)
+      DOWNLOAD_GPGKEYS=0
+      return 1
+      ;;
+    --no-gpgkeys)
+      DOWNLOAD_GPGKEYS=1
       return 1
       ;;
     --groups)
@@ -143,6 +154,7 @@ post_parse_download() {
   DOWNLOAD_REPO_SUBDIRECTORY="${DOWNLOAD_REPO_SUBDIRECTORY:-${DOWNLOAD_REPO_SUBDIRECTORY_DEFAULT}}"
   DOWNLOAD_MODULES_FILE="${DOWNLOAD_MODULES_FILE:-$DOWNLOAD_MODULES_FILE_DEFAULT}"
   DOWNLOAD_GROUPS_FILE="${DOWNLOAD_GROUPS_FILE:-$DOWNLOAD_GROUPS_FILE_DEFAULT}"
+  DOWNLOAD_GPG_FILE="${DOWNLOAD_GPG_FILE:-$DOWNLOAD_GPG_FILE_DEFAULT}"
 
   if ! test "$DOWNLOAD_OLD_VERSION_LIMIT" -gt 0; then
     set_parse_error "The old version limit must be a positive number (received ${DOWNLOAD_OLD_VERSION_LIMIT})"
@@ -222,6 +234,17 @@ main_download() {
           cat - <<<"$repo_group_content" > "$group_path"
         fi
       fi
+
+      if test "$DOWNLOAD_GPGKEYS" -eq 0; then
+      local key_dir
+      local gpg_path="${DOWNLOAD_GPG_FILE//%\{REPO\}/$repo}"
+      key_dir="$(dirname "$gpg_path")"
+      test -d "$key_dir" || mkdir -p "$key_dir"
+      local gpg_keys
+      if gpg_keys="$(get_gpg_keys "$repo")"; then
+        cat - <<<"$gpg_keys" >"$gpg_path"
+      fi
+      fi
     }
     popd >/dev/null || fatal "Failed to move out of $(pwd)" 3
   done
@@ -251,6 +274,32 @@ get_resolved_packages_list() {
 get_repo_list() {
   # Use awk to drop the header line and only print repo names
   dnf -q repolist | awk -e '{if(NR>1)print$1}'
+}
+
+## @fn get_gpg_keys(repo_name)
+## @brief Print all GPG keys of a repository
+## @return > The GPG keys of therepository as well as their comments
+get_gpg_keys() {
+  local repo_name="$1"
+
+  local repo_file
+  local gpg_keys
+  repo_file="$(dnf repolist -qv | awk '/^Repo-id/{if($3=="'"${repo_name}"'")a=1;else a=0} /^Repo-filename/{if(a)print$3}')"
+  read -ra gpg_keys < <(awk '/\s*\[.*\]/{a=0} /\s*\['"${repo_name}"'\]/{a=1} /gpgkey\s*=/{if(a)b=1} {if(a && b)print $0} {if(substr($0,length($0),1) != "\\")b=0}' "$repo_file" | sed -e 's/^gpgkey\s*=\|[,\\\r\n]/ /g')
+
+  if test "${#gpg_keys[@]}" -eq 0; then
+    return 1
+  else
+    local key_path
+    for key_path in "${gpg_keys[@]}"; do
+      # Filter-out '\'
+      if [ "${#key_path}" -gt 2 ]; then
+        print_resource_by_path "$key_path"
+        echo
+      fi
+    done
+    return 0
+  fi
 }
 
 ## @fn download_rpms()
