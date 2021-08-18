@@ -285,7 +285,17 @@ get_gpg_keys() {
   local repo_file
   local gpg_keys
   repo_file="$(dnf repolist -qv | awk '/^Repo-id/{if($3=="'"${repo_name}"'")a=1;else a=0} /^Repo-filename/{if(a)print$3}')"
-  read -ra gpg_keys < <(awk '/\s*\[.*\]/{a=0} /\s*\['"${repo_name}"'\]/{a=1} /gpgkey\s*=/{if(a)b=1} {if(a && b)print $0} {if(substr($0,length($0),1) != "\\")b=0}' "$repo_file" | sed -e 's/^gpgkey\s*=\|[,\\\r\n]/ /g')
+  read -ra gpg_keys < <(
+    local awk_parameters=(
+      -e '/\s*\[.*\]/{a=0} /\s*\['"${repo_name}"'\]/{a=1}' # Search for the target repository's section
+      -e '/gpgkey\s*=/{if(a)b=1}'                          # Set flag if at gpgkey attribute's line
+      -e '{if(a && b)print $0}'                            # Print-out line content if on gpgkey
+      -e '{if(substr($0,length($0),1) != "\\")b=0}'        # Disable gpgkey flag unless line ends with '\'
+      "$repo_file"
+    )
+    # Replace undesired values with spaces for proper array items detection
+    awk "${awk_parameters[@]}" | sed -e 's/^gpgkey\s*=\|[,\\\r\n]/ /g'
+  )
 
   if test "${#gpg_keys[@]}" -eq 0; then
     return 1
