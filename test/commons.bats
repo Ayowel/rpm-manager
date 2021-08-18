@@ -1,4 +1,3 @@
-
 source src/commons.sh
 
 teardown() {
