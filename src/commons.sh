@@ -29,7 +29,7 @@ get_repo_cache_path() {
   
   # Use 16 '?' as placeholder for the generated hash
   # TODO: find out how the hash is generated and generate it internally for deterministic resolution
-  find /var/cache/dnf -mindepth 1 -maxdepth 1 -type d -name "${repo_name}-????????????????" ! -name "${repo_name}-*-*" | head -1
+  find /var/cache/dnf /var/tmp/dnf-* -mindepth 1 -maxdepth 1 -type d -name "${repo_name}-????????????????" ! -name "${repo_name}-*-*" 2>/dev/null | head -1
 }
 
 ## @fn print_resource_by_path(path)
