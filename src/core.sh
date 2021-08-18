@@ -43,7 +43,7 @@ init() {
   PRINT_HELP=1
   PRINT_VERSION=1
   VERBOSE=1
-  VERSION_NUMBER=0.3.0
+  VERSION_NUMBER=0.4.0
 
   MODE_SOURCES=( group download consolidate )
   SELECTED_MODE=
