@@ -4,6 +4,7 @@
 
 ### Features
 
+* Add experimental gpgkey download and consolidation support for repositories
 * [DEV] Start adding unit tests
 
 ## Version 0.3.0

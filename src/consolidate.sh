@@ -8,6 +8,7 @@ help_consolidate() {
 Consolidate commands:
   group GROUP_FILE...      Consolidate a list of source group files
   module MODULE_FILE...    Consolidate a list of source module files
+  gpgkey KEY_FILE...       Consolidate a list of gpg key files
 
 Consolidate options:
   --output|-o O   Where the consolidated date should be written
@@ -27,7 +28,7 @@ init_consolidate() {
   CONSOLIDATE_OUTPUT_PATH=
   CONSOLIDATE_SOURCE_PATHS_VALIDATED=( )
   # Validation variables
-  CONSOLIDATE_VALID_TARGET_TYPE=( group module )
+  CONSOLIDATE_VALID_TARGET_TYPE=( group module gpgkey )
 }
 
 ## @fn parse_args_consolidate()
@@ -111,6 +112,9 @@ main_consolidate() {
     module)
       consolidate_modules "${CONSOLIDATE_SOURCE_PATHS_VALIDATED[@]}" >&3
       ;;
+    gpgkey)
+      consolidate_gpgkeys "${CONSOLIDATE_SOURCE_PATHS_VALIDATED[@]}" >&3
+      ;;
     *)
       ;;
   esac
@@ -125,6 +129,16 @@ consolidate_modules() {
   # We use `awk 1` here to guarantee that a newline will be added at the end of each module file
   # Errors may occur after concatenating some module files if this is not done
   find "$@" -type f -name '*.yaml' -print0 | xargs -r0 awk 1
+}
+
+## @fn consolidate_gpgkeys()
+## @brief Prints a consolidated version of all target key files
+## @param ... Paths to key files or directories containing only key files
+## @return $> The consolidated key file
+consolidate_gpgkeys() {
+  # We use `awk 1` here to guarantee that a newline will be added at the end of each module file
+  # Errors may occur after concatenating some module files if this is not done
+  find "$@" -type f -print0 | xargs -r0 awk 1
 }
 
 ## @fn consolidate_groups_filter_xmllint()
