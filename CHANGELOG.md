@@ -6,6 +6,10 @@
 
 * [DEV] Start adding unit tests
 
+### Fixes
+
+* Look for local users directories when trying to fetch data in cache when the main dnf cache is unreadable
+
 ## Version 0.3.0
 
 ### Breaking changes
