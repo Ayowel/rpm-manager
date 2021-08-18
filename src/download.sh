@@ -286,6 +286,7 @@ get_gpg_keys() {
   local gpg_keys
   repo_file="$(dnf repolist -qv | awk '/^Repo-id/{if($3=="'"${repo_name}"'")a=1;else a=0} /^Repo-filename/{if(a)print$3}')"
   read -ra gpg_keys < <(
+    # shellcheck disable=SC2016
     local awk_parameters=(
       -e '/\s*\[.*\]/{a=0} /\s*\['"${repo_name}"'\]/{a=1}' # Search for the target repository's section
       -e '/gpgkey\s*=/{if(a)b=1}'                          # Set flag if at gpgkey attribute's line

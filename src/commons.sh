@@ -41,7 +41,7 @@ print_resource_by_path() {
   # Detect if this is a local or remote file
   if test -e "$path"; then
     cat "$path"
-  elif grep -qE '^https?://' <<<"$path"; then
+  elif grep -qE '^(https?|file)://' <<<"$path"; then
     curl -s "$path"
   else
     return 1
