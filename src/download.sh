@@ -144,6 +144,10 @@ parse_args_download() {
       return 2
       ;;
   esac
+  if test -z "$1" && test -n "$2"; then
+    DOWNLOAD_PACKAGE_LIST+=( "$2" )
+    return 2
+  fi
   return 0
 }
 

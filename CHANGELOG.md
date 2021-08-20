@@ -1,5 +1,11 @@
 # Changelog
 
+## Release Candidate
+
+### Features
+
+* Packages may now be provided without option to the 'download' command
+
 ## Version 0.4.0
 
 ### Features
