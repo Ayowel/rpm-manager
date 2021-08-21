@@ -48,6 +48,42 @@ print_resource_by_path() {
   fi
 }
 
+## @fn print_unpacked_file_content(file, raw_pattern)
+## @brief Print the content of an archive file
+## @param file The file to unpack
+## @param raw_pattern If the pattern matches the file's path, consider the file already unpacked
+## @return
+##    * $> The file's content
+##    * 1 if an error occured or the file's format is unsupported, else 0
+##    * $>&2 An error message if an error occured
+## @note This should only be used on single-file archives
+print_unpacked_file_content() {
+  local target_file="$1"
+  local raw_pattern="$2"
+
+  if [ ! -f "$target_file" ] || [ ! -r "$target_file" ]; then
+    echo "Failed to access file '$target_file'" >&2
+    return 1
+  fi
+
+  if grep -qE "$raw_pattern" <<<"$target_file"; then
+    cat "$target_file"
+  else
+    case "$target_file" in
+      *.gz)
+        gunzip -kc "$target_file"
+        ;;
+      *.xz)
+        xz -kcd "$target_file"
+        ;;
+      *)
+        echo "Unsupported file format for '$target_file'" >&2
+        return 1
+        ;;
+    esac
+  fi
+}
+
 ## @fn run_from_dir()
 ## @brief Run a command from a directory
 ## @param directory The directory to run from

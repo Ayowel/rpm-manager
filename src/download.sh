@@ -383,20 +383,9 @@ get_repo_modules() {
 
   local module_file
   for module_file in "${module_paths[@]}"; do
-    # We only support the .yaml.gz extension, test for it here
-    case "$module_file" in
-      *.yaml.gz)
-        gunzip -kc "${repo_path}/${module_file}"
-        return 0
-        ;;
-      *.yaml.xz)
-        xz -kcd "${repo_path}/${module_file}"
-        return 0
-        ;;
-      *)
-        echo "Found unsupported module file ${module_file}" >&2
-        ;;
-    esac
+    if print_unpacked_file_content "${repo_path}/${module_file}" '\.xml$'; then
+      return 0
+    fi
   done
   return 1
 }
@@ -466,30 +455,11 @@ get_repo_groups() {
   group_paths="$(get_repodata_data_relative_location group group_gz <"${repo_path}/repodata/repomd.xml")"
 
   local group_file
-  local files_not_found=( )
   for group_file in $group_paths; do # We want the 'in' part to split on spaces
     # Ensure that we appropriatly handle the file found
-    if ! test -f "${repo_path}/${group_file}"; then
-      files_not_found+=( "$group_file" )
-      continue
+    if print_unpacked_file_content "${repo_path}/${group_file}" '\.xml$'; then
+      return 0
     fi
-    case "$group_file" in
-      *.xml)
-        cat "${repo_path}/${group_file}"
-        return 0
-        ;;
-      *.xml.gz)
-        gunzip -kc "${repo_path}/${group_file}"
-        return 0
-        ;;
-      *)
-        echo "Found unsupported group file ${group_file}" >&2
-        ;;
-    esac
   done
-
-  if test "${#files_not_found[@]}" -gt 0; then
-      echo "Could not find group file(s) in cache:" "${files_not_found[@]}" >&2
-  fi
   return 1
 }
