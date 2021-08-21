@@ -2,6 +2,8 @@
 
 ## Release Candidate
 
+This release is focused on ramping up unit tests and fixing issues discovered while doing so.
+
 ### Features
 
 * Packages may now be provided without option to the 'download' command
@@ -16,6 +18,7 @@
 ### Breaking changes
 
 * In `download` mode, `--rpm` and `--no-rpm` were renamed to `--rpms` and `--no-rpms`
+* When resolving cached datas, we now prioritize the current user's cache instead of the global cache
 
 ## Version 0.4.0
 

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE comps
+  PUBLIC '-//Red Hat, Inc.//DTD Comps info//EN'
+  'comps.dtd'>
+<comps>
+  <group>
+    <id>fonts</id>
+    <name>Fonts</name>
+    <description>Fonts packages for rendering text on the desktop.</description>
+    <default>true</default>
+    <uservisible>false</uservisible>
+    <packagelist>
+      <packagereq type="default">dejavu-sans-fonts</packagereq>
+      <packagereq type="default">dejavu-sans-mono-fonts</packagereq>
+      <packagereq type="default">dejavu-serif-fonts</packagereq>
+    </packagelist>
+  </group>
+  <category>
+    <id>base-system</id>
+    <name>System</name>
+    <description>Core system components.</description>
+    <display_order>10</display_order>
+    <grouplist>
+      <groupid>dial-up</groupid>
+      <groupid>hardware-monitoring</groupid>
+      <groupid>infiniband</groupid>
+      <groupid>large-systems</groupid>
+      <groupid>legacy-unix</groupid>
+      <groupid>mainframe-access</groupid>
+      <groupid>network-tools</groupid>
+      <groupid>performance</groupid>
+      <groupid>scientific</groupid>
+      <groupid>security-tools</groupid>
+      <groupid>smart-card</groupid>
+      <groupid>standard</groupid>
+    </grouplist>
+  </category>
+  <environment>
+    <id>minimal-environment</id>
+    <name>Minimal Install</name>
+    <description>Basic functionality.</description>
+    <display_order>3</display_order>
+    <grouplist>
+      <groupid>core</groupid>
+    </grouplist>
+    <optionlist>
+      <groupid>guest-agents</groupid>
+      <groupid>standard</groupid>
+    </optionlist>
+  </environment>
+</comps>

@@ -1,4 +1,9 @@
-source src/commons.sh
+#!/usr/bin/env bats
+
+setup() {
+  tmp_paths=( )
+  source src/commons.sh
+}
 
 teardown() {
   local d
@@ -9,13 +14,13 @@ teardown() {
   done
 }
 
-@test "Looking for thrown errors without setting any does not return an error" {
+@test "get_first_parse_error does not return an error if no exception was set" {
   run get_first_parse_error
   [ "$status" -eq 0 ]
   [ "$output" = "" ]
 }
 
-@test "Saving an exception returns an error at lookup" {
+@test "get_first_parse_error returns an error at lookup after saving an exception" {
   local error_message="Not happy"
 
   # Ensure that no error is already saved
@@ -29,7 +34,7 @@ teardown() {
   [ "$output" = "$error_message" ]
 }
 
-@test "Saving multiple exceptions only return the first at lookup" {
+@test "get_first_parse_error only returns the first at lookup after saving multiple exceptions" {
   local error_message1="Not happy"
   local error_message2="Not allowed"
 
@@ -54,7 +59,7 @@ teardown() {
   [ "$output" = "$tmp_dir" ]
 }
 
-@test "print_resource_by_path prints-out paths to both local and remote resources" {
+@test "print_resource_by_path prints-out contents of both local and remote resources" {
   tmp_paths=( "$(mktemp)" )
   local test_file="${tmp_paths[0]}"
   local test_file_content

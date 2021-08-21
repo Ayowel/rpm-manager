@@ -1,6 +1,6 @@
 # RPM Download Helper tool
 
-[![Release number](https://shields.io/github/v/release/Ayowel/rpm-manager)](https://github.com/Ayowel/rpm-manager/releases/latest) [![Worflow status](https://shields.io/github/workflow/status/Ayowel/rpm-manager/Main)](https://github.com/Ayowel/rpm-manager/actions)
+[![Release number](https://shields.io/github/v/release/Ayowel/rpm-manager)](https://github.com/Ayowel/rpm-manager/releases/latest) [![Worflow status](https://shields.io/github/workflow/status/Ayowel/rpm-manager/Main)](https://github.com/Ayowel/rpm-manager/actions) [![Coverage status](https://shields.io/codecov/c/github/Ayowel/rpm-manager)](https://codecov.io/github/Ayowel/rpm-manager/)
 
 ## Introduction
 
