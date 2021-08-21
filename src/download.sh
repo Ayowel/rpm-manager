@@ -303,14 +303,6 @@ get_packages_list() {
   } | sort -n | uniq
 }
 
-## @fn get_repo_list()
-## @brief Prints a list of enabled repositories on the system
-## @return > A list of enabled repositories
-get_repo_list() {
-  # Use awk to drop the header line and only print repo names
-  dnf -q repolist | awk -e '{if(NR>1)print$1}'
-}
-
 ## @fn get_gpg_keys(repo_name)
 ## @brief Print all GPG keys of a repository
 ## @return > The GPG keys of therepository as well as their comments
@@ -320,18 +312,17 @@ get_gpg_keys() {
   local repo_file
   local gpg_keys
   repo_file="$(dnf repolist -qv | awk '/^Repo-id/{if($3=="'"${repo_name}"'")a=1;else a=0} /^Repo-filename/{if(a)print$3}')"
-  read -ra gpg_keys < <(
-    # shellcheck disable=SC2016
-    local awk_parameters=(
-      -e '/\s*\[.*\]/{a=0} /\s*\['"${repo_name}"'\]/{a=1}' # Search for the target repository's section
-      -e '/gpgkey\s*=/{if(a)b=1}'                          # Set flag if at gpgkey attribute's line
-      -e '{if(a && b)print $0}'                            # Print-out line content if on gpgkey
-      -e '{if(substr($0,length($0),1) != "\\")b=0}'        # Disable gpgkey flag unless line ends with '\'
-      "$repo_file"
-    )
-    # Replace undesired values with spaces for proper array items detection
-    awk "${awk_parameters[@]}" | sed -e 's/^gpgkey\s*=\|[,\\\r\n]/ /g'
+  local awk_parameters
+  # shellcheck disable=SC2016
+  awk_parameters=(
+    -e '/\s*\[.*\]/{a=0} /\s*\['"${repo_name}"'\]/{a=1}' # Search for the target repository's section
+    -e '/gpgkey\s*=/{if(a)b=1}'                          # Set flag if at gpgkey attribute's line
+    -e '{if(a && b)print $0}'                            # Print-out line content if on gpgkey
+    -e '{if(substr($0,length($0),1) != "\\")b=0}'        # Disable gpgkey flag unless line ends with '\'
+    "$repo_file"
   )
+  # Replace undesired values with spaces for proper array items detection
+  read -ra gpg_keys < <(awk "${awk_parameters[@]}" | sed -e 's/^gpgkey\s*=\|[,\\\r\n]/ /g')
 
   if test "${#gpg_keys[@]}" -eq 0; then
     return 1
@@ -339,7 +330,7 @@ get_gpg_keys() {
     local key_path
     for key_path in "${gpg_keys[@]}"; do
       # Filter-out '\'
-      if [ "${#key_path}" -gt 2 ]; then
+      if test "${#key_path}" -gt 2; then
         print_resource_by_path "$key_path"
         echo
       fi
@@ -388,55 +379,6 @@ get_repo_modules() {
     fi
   done
   return 1
-}
-
-## @fn get_repodata_data_relative_location_awk()
-## @copydoc get_repodata_data_relative_location()
-## @see get_repodata_data_relative_location()
-## @private
-get_repodata_data_relative_location_awk() {
-  local target_types="$1"
-  while test "$#" -gt 1; do
-    shift
-    target_types+="|${1}"
-  done
-  # shellcheck disable=SC2016
-  local group_search_awk_exp='/<data type="'"${target_types}"'">/{module=1} /<location/{if(module==1){print$2;module=0}}'
-  awk -F \" -e "$group_search_awk_exp"
-}
-
-## @fn get_repodata_data_relative_location_xmllint()
-## @copydoc get_repodata_data_relative_location()
-## @see get_repodata_data_relative_location()
-## @private
-get_repodata_data_relative_location_xmllint() {
-  # Drop namespaces from input files
-  local repomd_content
-  repomd_content="$(sed -Ee 's/\sxmlns(:[^=]*)?="[^"]*"//g')"
-  for target_item in "$@"; do
-    <<<"$repomd_content" xmllint --xpath "string(/repomd/data[@type=\"${target_item}\"]/location/@href)" -
-    # Add newline after match
-    echo
-  done
-}
-
-## @fn get_repodata_data_relative_location()
-## @brief Extract the location of a repodata file
-## @param types... Repodata attributes whose locations should be extracted
-## @note
-##   * $< The input file's content
-##   * $> The extracted locations
-get_repodata_data_relative_location() {
-  local used_filter
-
-  # If xmllint is available on the system, use it
-  if test "${USE_XMLLINT:-1}" -eq 0 || { test "${USE_AWK:-1}" -ne 0 && type xmllint >/dev/null 2>&1; }; then
-    used_filter=get_repodata_data_relative_location_xmllint
-  else
-    used_filter=get_repodata_data_relative_location_awk
-  fi
-
-  "$used_filter" "$@"
 }
 
 ## @fn get_repo_groups()

@@ -21,17 +21,6 @@ get_first_parse_error() {
   return 0
 }
 
-## @fn get_repo_cache_path()
-## @brief Returns the path to the local metadata folder for a repository
-## @param repo_name Name of the repository whose cache path should be discovered
-get_repo_cache_path() {
-  local repo_name="$1"
-  
-  # Use 16 '?' as placeholder for the generated hash
-  # TODO: find out how the hash is generated and generate it internally for deterministic resolution
-  find /var/cache/dnf /var/tmp/dnf-* -mindepth 1 -maxdepth 1 -type d -name "${repo_name}-????????????????" ! -name "${repo_name}-*-*" 2>/dev/null | head -1
-}
-
 ## @fn print_resource_by_path(path)
 ## @brief Prints-out the content of a file
 ## @param path The file's URI or path

@@ -124,7 +124,8 @@ main_group() {
       get_dnf_group_packages "$(echo -n "${GROUP_GROUP_TYPES[@]}")" "$(echo -n "${GROUP_PACKAGE_TYPES[@]}")" "${groups[@]}"
       ;;
     *)
-      fatal "This can't be..."
+      # Should be guarded by parse_args and post_parse group functions
+      fatal "An error occured while resolving the provided subcommand '$GROUP_CURRENT_MODE'. This should not happen."
       ;;
   esac
 }
@@ -152,7 +153,8 @@ get_dnf_base_groups() {
         awk_self_component="$awk_self_component_default"
         break;
         ;;
-      self) # If the group is not an environment group, print it
+      self)
+        # If the group is not an environment group, print it
         awk_self_component="$awk_self_component_default"
         ;;
       mandatory|optional)
@@ -160,7 +162,8 @@ get_dnf_base_groups() {
         regex_filter_group_component+="${type^[m,o]}"
         ;;
       *)
-        fatal "Unsupported group filter type error '$type'" >&2
+        # Should be guarded by post_parse
+        fatal "Unsupported group filter type error '$type'. This should not possibly happen" >&2
         ;;
     esac
   done
@@ -197,6 +200,7 @@ get_dnf_group_packages() {
         regex_filter_package_component+="${type^[d,m,o]}"
         ;;
       *)
+        # Should be guarded by post_parse
         fatal "Unsupported package filter type error '$type'" >&2
         ;;
     esac
