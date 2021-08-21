@@ -144,7 +144,7 @@ parse_args_download() {
       return 2
       ;;
     --package-file)
-      DOWNLOAD_PACKAGE_LIST_FILES+=( "$(realpath "$2")" )
+      DOWNLOAD_PACKAGE_LIST_FILES+=( "$2" )
       return 2
       ;;
     --package)
@@ -179,6 +179,20 @@ post_parse_download() {
   if ! test "$DOWNLOAD_OLD_VERSION_LIMIT" -gt 0; then
     set_parse_error "The old version limit must be a positive number (received ${DOWNLOAD_OLD_VERSION_LIMIT})"
   fi
+
+  local f
+  local packages
+  for f in "${DOWNLOAD_PACKAGE_LIST_FILES[@]}"; do
+    read -ra packages <"$f"
+    DOWNLOAD_PACKAGE_LIST+=( "${packages[@]}" )
+  done
+  # Ensure that we're going to keep an output data or raise error
+  for var in DOWNLOAD_RPMS DOWNLOAD_MODULES DOWNLOAD_GROUPS DOWNLOAD_GPGKEYS DOWNLOAD_KEEP_INTERMEDIATE_RESOLUTION_FILE; do
+    if test "${!var}" -eq 0; then
+      return
+    fi
+  done
+  set_parse_error "Attempting to use the download command but all valid command targets are disabled"
 }
 
 ## @fn main_download()
@@ -203,9 +217,6 @@ main_download() {
         # If no package or group was configured, get all available rpms
         echo '*'
       else
-        if test "${#DOWNLOAD_PACKAGE_LIST_FILES[@]}" -ne 0; then
-          cat -- "${DOWNLOAD_PACKAGE_LIST_FILES[@]}"
-        fi
         if test "${#DOWNLOAD_PACKAGE_LIST[@]}" -ne 0; then
           printf "%s\n" "${DOWNLOAD_PACKAGE_LIST[@]}"
         fi
