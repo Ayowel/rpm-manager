@@ -5,6 +5,11 @@
 ### Features
 
 * Packages may now be provided without option to the 'download' command
+* Add downloaded file options `--gpg-subfile`, `--module-subfile`, and `--group-subfile
+
+### Breaking changes
+
+* In `download` mode, `--rpm` and `--no-rpm` were renamed to `--rpms` and `--no-rpms`
 
 ## Version 0.4.0
 

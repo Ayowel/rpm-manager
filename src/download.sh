@@ -12,9 +12,10 @@ Download options:
   --group        Name of a group whose packages should be downloaded
   --history NUM  How many versions of a package should be downloaded if more
                    than one is available (defaults to 1)
-  --[no-](modules|gpgkeys|groups|resolve|rpm)
+  --[no-](modules|gpgkeys|groups|rpms)
                  Whether a specific repository data type should be loaded or
                    not (defaults to true)
+  --[no-]resolve Whether RPM dependencies should be resolved or ignored
   --download-repos REPOS
                  Comma/space-separated list of repositories to download
                    packages from (resolution is always against all enabled
@@ -24,6 +25,9 @@ Download options:
                    (defaults to the repository's name) 
   --rpm-subdirectory DIR
                  Directory where downloaded RPMs should be stored (from REPO_DIR)
+  --(gpg|module|group)-subfile FILE
+                 Filepath to store the corresponding repository data to
+		   (from the repository's directory)
   --resolved-rpms-file FILE
                  Where the list of resolved RPMs versions should be stored
   -k|--keep      Keep resolve RPMs dependencies file
@@ -97,11 +101,11 @@ parse_args_download() {
       DOWNLOAD_RESOLVE=1
       return 1
       ;;
-    --rpm)
+    --rpms)
       DOWNLOAD_RPMS=0
       return 1
       ;;
-    --no-rpm)
+    --no-rpms)
       DOWNLOAD_RPMS=1
       return 1
       ;;
@@ -117,6 +121,18 @@ parse_args_download() {
       ;;
     --rpm-subdirectory)
       DOWNLOAD_RPM_SUBDIRECTORY="${2:-.}"
+      return 2
+      ;;
+    --gpg-subfile)
+      DOWNLOAD_GPG_FILE="${2:-DOWNLOAD_GPG_FILE_DEFAULT}"
+      return 2
+      ;;
+    --module-subfile)
+      DOWNLOAD_MODULES_FILE="${2:-DOWNLOAD_MODULES_FILE_DEFAULT}"
+      return 2
+      ;;
+    --group-subfile)
+      DOWNLOAD_GROUPS_FILE="${2:-DOWNLOAD_GROUPS_FILE_DEFAULT}"
       return 2
       ;;
     -k|--keep)
