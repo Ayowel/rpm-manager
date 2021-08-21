@@ -208,7 +208,7 @@ main_download() {
   fi
 
   # Build the list of RPMs we want to download (if any)
-  if test "$DOWNLOAD_RPMS" -eq 0 || test "$DOWNLOAD_RESOLVE" -eq 0; then
+  if test "$DOWNLOAD_RPMS" -eq 0 || test "$DOWNLOAD_KEEP_INTERMEDIATE_RESOLUTION_FILE" -eq 0; then
     tmp_file="$(realpath "${DOWNLOAD_INTERMEDIATE_RESOLUTION_FILE:-$(TMPDIR=. mktemp --suffix .downloader)}")"
     echo "Building Packages list into $tmp_file"
     # Print all desired packages in this section so that they are used in the parsed command

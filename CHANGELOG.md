@@ -7,6 +7,7 @@
 * Packages may now be provided without option to the 'download' command
 * Add downloaded file options `--gpg-subfile`, `--module-subfile`, and `--group-subfile
 * Download mode's `--package-file` now supports bash pipes usage (`<(my_command)`)
+* Huge performance improvement to download mode when not downloading RPM files
 
 ### Breaking changes
 
