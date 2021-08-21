@@ -9,7 +9,11 @@ get_repo_cache_path() {
 
   # Use 16 '?' as placeholder for the generated hash
   # TODO: find out how the hash is generated and generate it internally for deterministic resolution
-  find "/var/tmp/dnf-$(whoami)-"???????? /var/cache/dnf -mindepth 1 -maxdepth 1 -type d -name "${repo_name}-????????????????" ! -name "${repo_name}-*-*" 2>/dev/null | head -1
+  {
+    local find_args=( -mindepth 1 -maxdepth 1 -type d -name "${repo_name}-????????????????" ! -name "${repo_name}-*-*" )
+    find "/var/tmp/dnf-$(id -u)-"???????? "/var/tmp/dnf-$(whoami)-"???????? "${find_args[@]}"
+    find /var/cache/dnf "${find_args[@]}"
+  } 2>/dev/null | head -1
 }
 
 ## @fn get_repo_list()
