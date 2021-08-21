@@ -2,7 +2,7 @@ BUILD_DIR=build
 
 .PHONY: all audit lint test build-rpm build-scripts doc quick-package package
 
-all: audit doc package verify
+all: audit doc-package package verify
 
 clean:
 	rm -rf build docs rpm-manager.tar.gz
