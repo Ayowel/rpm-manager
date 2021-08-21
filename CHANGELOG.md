@@ -9,6 +9,10 @@
 * Download mode's `--package-file` now supports bash pipes usage (`<(my_command)`)
 * Huge performance improvement to download mode when not downloading RPM files
 
+### Fixes
+
+* Download mode's `--no-resolve` is now properly honored if it is set
+
 ### Breaking changes
 
 * In `download` mode, `--rpm` and `--no-rpm` were renamed to `--rpms` and `--no-rpms`

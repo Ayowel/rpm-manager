@@ -224,7 +224,7 @@ main_download() {
           get_dnf_group_packages all all "${DOWNLOAD_GROUP_LIST[@]}"
         fi
       fi
-    } | get_resolved_packages_list >"$tmp_file"
+    } | get_packages_list "$DOWNLOAD_RESOLVE" >"$tmp_file"
   fi
 
   for repo in "${repolist[@]}"; do
@@ -285,17 +285,21 @@ main_download() {
   fi
 }
 
-## @fn get_resolved_packages_list()
+## @fn get_packages_list(resolve)
 ## @brief Prints the resolved names of packages and their dependencies
+## @param resolve Whether packages dependencies should be resolved (0) or not
 ## @note < A list of packages to resolve
 ## @return > A list of resolved packages and dependencies
-get_resolved_packages_list() {
+get_packages_list() {
+  local resolve="${1:-1}"
   local package_list
   package_list="$(xargs -r dnf -q repoquery --latest-limit 1 --)"
 
   {
     cat - <<<"$package_list"
-    cat - <<<"$package_list" | xargs -r dnf -q repoquery --requires --resolve --recursive --
+    if test "$resolve" -eq 0; then
+      cat - <<<"$package_list" | xargs -r dnf -q repoquery --requires --resolve --recursive --
+    fi
   } | sort -n | uniq
 }
 
