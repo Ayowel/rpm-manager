@@ -9,6 +9,7 @@ source vendors/shell-utilities/src/argument_parser.sh
 ## END shell-utilities code inclusion
 
 source src/commons.sh
+source src/dnf_commons.sh
 source src/groups.sh
 source src/consolidate.sh
 source src/download.sh

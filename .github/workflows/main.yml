@@ -17,23 +17,22 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: true
-      - name: Install
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y make shellcheck kcov bats doxygen
-      - name: Tests
-        run: make audit
+      - name: Prepare build container
+        run: docker build --tag rpmmanager/dev --file containers/dev.Dockerfile  .
+      - name: Build
+        run: "docker run --rm -e \"GNUPGHOME=$(mktemp -d)\" -v \"$(pwd):/mnt\" -u \"$(id -u ${USER}):$(id -g ${USER})\" rpmmanager/dev make all"
       - name: Save coverage
         uses: codecov/codecov-action@v1
         with:
           fail_ci_if_error: false
-      - name: Doc
-        run: make doc-package
-      - name: Build
+      - name: Build experimental release container
         run: |
-          make package
+          docker build -f containers/Dockerfile -t rpm-manager/rpm-manager .
+          docker run --rm rpm-manager/rpm-manager
+      - name: Generate release message
+        run: |
           awk -e '/^## /{a+=1} {if(a==1)print$0}' CHANGELOG.md >CHANGELOG.release.md
-      - name: Release
+      - name: Release to github
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:

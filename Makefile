@@ -1,25 +1,25 @@
 BUILD_DIR=build
 
-.PHONY: all audit lint test coverage build-rpm build-scripts doc quick-package package
+.PHONY: all audit lint test build-rpm build-scripts doc quick-package package
 
-all: package audit doc
+all: audit doc-package package verify
 
 clean:
-	rm -rf build docs coverage rpm-manager.tar.gz
+	rm -rf build docs rpm-manager.tar.gz
 
 doc:
 	doxygen tools/Doxyfile
 
-audit: lint test coverage
+audit: lint test
 
 lint:
 	shellcheck --shell bash main.sh src/*
 
 test:
-	bats --tap test
-
-coverage:
 	kcov --bash-dont-parse-binary-dir --include-path=src,main.sh coverage bats --tap test
+
+verify: build/rpm-manager
+	MANAGER=$< bats --tap test/inte_*.bats
 
 package: build-scripts licenses
 	find build/licenses -type f -exec chmod 644 {} \;

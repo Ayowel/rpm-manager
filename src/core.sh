@@ -88,11 +88,13 @@ parse_args() {
       # Set globally for valorisation in dependant scripts 
       # shellcheck disable=SC2034
       USE_AWK=0
+      return 1
       ;;
     --use-xmllint)
       # Set globally for valorisation in dependant scripts 
       # shellcheck disable=SC2034
       USE_XMLLINT=0
+      return 1
       ;;
     '')
       if test -z "$SELECTED_MODE"; then

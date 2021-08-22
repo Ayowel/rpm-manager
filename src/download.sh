@@ -12,9 +12,10 @@ Download options:
   --group        Name of a group whose packages should be downloaded
   --history NUM  How many versions of a package should be downloaded if more
                    than one is available (defaults to 1)
-  --[no-](modules|gpgkeys|groups|resolve|rpm)
+  --[no-](modules|gpgkeys|groups|rpms)
                  Whether a specific repository data type should be loaded or
                    not (defaults to true)
+  --[no-]resolve Whether RPM dependencies should be resolved or ignored
   --download-repos REPOS
                  Comma/space-separated list of repositories to download
                    packages from (resolution is always against all enabled
@@ -24,6 +25,9 @@ Download options:
                    (defaults to the repository's name) 
   --rpm-subdirectory DIR
                  Directory where downloaded RPMs should be stored (from REPO_DIR)
+  --(gpg|module|group)-subfile FILE
+                 Filepath to store the corresponding repository data to
+		   (from the repository's directory)
   --resolved-rpms-file FILE
                  Where the list of resolved RPMs versions should be stored
   -k|--keep      Keep resolve RPMs dependencies file
@@ -97,11 +101,11 @@ parse_args_download() {
       DOWNLOAD_RESOLVE=1
       return 1
       ;;
-    --rpm)
+    --rpms)
       DOWNLOAD_RPMS=0
       return 1
       ;;
-    --no-rpm)
+    --no-rpms)
       DOWNLOAD_RPMS=1
       return 1
       ;;
@@ -119,6 +123,18 @@ parse_args_download() {
       DOWNLOAD_RPM_SUBDIRECTORY="${2:-.}"
       return 2
       ;;
+    --gpg-subfile)
+      DOWNLOAD_GPG_FILE="${2:-DOWNLOAD_GPG_FILE_DEFAULT}"
+      return 2
+      ;;
+    --module-subfile)
+      DOWNLOAD_MODULES_FILE="${2:-DOWNLOAD_MODULES_FILE_DEFAULT}"
+      return 2
+      ;;
+    --group-subfile)
+      DOWNLOAD_GROUPS_FILE="${2:-DOWNLOAD_GROUPS_FILE_DEFAULT}"
+      return 2
+      ;;
     -k|--keep)
       DOWNLOAD_KEEP_INTERMEDIATE_RESOLUTION_FILE=0
       return 1
@@ -128,7 +144,7 @@ parse_args_download() {
       return 2
       ;;
     --package-file)
-      DOWNLOAD_PACKAGE_LIST_FILES+=( "$(realpath "$2")" )
+      DOWNLOAD_PACKAGE_LIST_FILES+=( "$2" )
       return 2
       ;;
     --package)
@@ -144,6 +160,10 @@ parse_args_download() {
       return 2
       ;;
   esac
+  if test -z "$1" && test -n "$2"; then
+    DOWNLOAD_PACKAGE_LIST+=( "$2" )
+    return 2
+  fi
   return 0
 }
 
@@ -159,6 +179,20 @@ post_parse_download() {
   if ! test "$DOWNLOAD_OLD_VERSION_LIMIT" -gt 0; then
     set_parse_error "The old version limit must be a positive number (received ${DOWNLOAD_OLD_VERSION_LIMIT})"
   fi
+
+  local f
+  local packages
+  for f in "${DOWNLOAD_PACKAGE_LIST_FILES[@]}"; do
+    read -ra packages <"$f"
+    DOWNLOAD_PACKAGE_LIST+=( "${packages[@]}" )
+  done
+  # Ensure that we're going to keep an output data or raise error
+  for var in DOWNLOAD_RPMS DOWNLOAD_MODULES DOWNLOAD_GROUPS DOWNLOAD_GPGKEYS DOWNLOAD_KEEP_INTERMEDIATE_RESOLUTION_FILE; do
+    if test "${!var}" -eq 0; then
+      return
+    fi
+  done
+  set_parse_error "Attempting to use the download command but all valid command targets are disabled"
 }
 
 ## @fn main_download()
@@ -174,7 +208,7 @@ main_download() {
   fi
 
   # Build the list of RPMs we want to download (if any)
-  if test "$DOWNLOAD_RPMS" -eq 0 || test "$DOWNLOAD_RESOLVE" -eq 0; then
+  if test "$DOWNLOAD_RPMS" -eq 0 || test "$DOWNLOAD_KEEP_INTERMEDIATE_RESOLUTION_FILE" -eq 0; then
     tmp_file="$(realpath "${DOWNLOAD_INTERMEDIATE_RESOLUTION_FILE:-$(TMPDIR=. mktemp --suffix .downloader)}")"
     echo "Building Packages list into $tmp_file"
     # Print all desired packages in this section so that they are used in the parsed command
@@ -183,9 +217,6 @@ main_download() {
         # If no package or group was configured, get all available rpms
         echo '*'
       else
-        if test "${#DOWNLOAD_PACKAGE_LIST_FILES[@]}" -ne 0; then
-          cat -- "${DOWNLOAD_PACKAGE_LIST_FILES[@]}"
-        fi
         if test "${#DOWNLOAD_PACKAGE_LIST[@]}" -ne 0; then
           printf "%s\n" "${DOWNLOAD_PACKAGE_LIST[@]}"
         fi
@@ -193,7 +224,7 @@ main_download() {
           get_dnf_group_packages all all "${DOWNLOAD_GROUP_LIST[@]}"
         fi
       fi
-    } | get_resolved_packages_list >"$tmp_file"
+    } | get_packages_list "$DOWNLOAD_RESOLVE" >"$tmp_file"
   fi
 
   for repo in "${repolist[@]}"; do
@@ -254,26 +285,22 @@ main_download() {
   fi
 }
 
-## @fn get_resolved_packages_list()
+## @fn get_packages_list(resolve)
 ## @brief Prints the resolved names of packages and their dependencies
+## @param resolve Whether packages dependencies should be resolved (0) or not
 ## @note < A list of packages to resolve
 ## @return > A list of resolved packages and dependencies
-get_resolved_packages_list() {
+get_packages_list() {
+  local resolve="${1:-1}"
   local package_list
   package_list="$(xargs -r dnf -q repoquery --latest-limit 1 --)"
 
   {
     cat - <<<"$package_list"
-    cat - <<<"$package_list" | xargs -r dnf -q repoquery --requires --resolve --recursive --
+    if test "$resolve" -eq 0; then
+      cat - <<<"$package_list" | xargs -r dnf -q repoquery --requires --resolve --recursive --
+    fi
   } | sort -n | uniq
-}
-
-## @fn get_repo_list()
-## @brief Prints a list of enabled repositories on the system
-## @return > A list of enabled repositories
-get_repo_list() {
-  # Use awk to drop the header line and only print repo names
-  dnf -q repolist | awk -e '{if(NR>1)print$1}'
 }
 
 ## @fn get_gpg_keys(repo_name)
@@ -285,18 +312,17 @@ get_gpg_keys() {
   local repo_file
   local gpg_keys
   repo_file="$(dnf repolist -qv | awk '/^Repo-id/{if($3=="'"${repo_name}"'")a=1;else a=0} /^Repo-filename/{if(a)print$3}')"
-  read -ra gpg_keys < <(
-    # shellcheck disable=SC2016
-    local awk_parameters=(
-      -e '/\s*\[.*\]/{a=0} /\s*\['"${repo_name}"'\]/{a=1}' # Search for the target repository's section
-      -e '/gpgkey\s*=/{if(a)b=1}'                          # Set flag if at gpgkey attribute's line
-      -e '{if(a && b)print $0}'                            # Print-out line content if on gpgkey
-      -e '{if(substr($0,length($0),1) != "\\")b=0}'        # Disable gpgkey flag unless line ends with '\'
-      "$repo_file"
-    )
-    # Replace undesired values with spaces for proper array items detection
-    awk "${awk_parameters[@]}" | sed -e 's/^gpgkey\s*=\|[,\\\r\n]/ /g'
+  local awk_parameters
+  # shellcheck disable=SC2016
+  awk_parameters=(
+    -e '/\s*\[.*\]/{a=0} /\s*\['"${repo_name}"'\]/{a=1}' # Search for the target repository's section
+    -e '/gpgkey\s*=/{if(a)b=1}'                          # Set flag if at gpgkey attribute's line
+    -e '{if(a && b)print $0}'                            # Print-out line content if on gpgkey
+    -e '{if(substr($0,length($0),1) != "\\")b=0}'        # Disable gpgkey flag unless line ends with '\'
+    "$repo_file"
   )
+  # Replace undesired values with spaces for proper array items detection
+  read -ra gpg_keys < <(awk "${awk_parameters[@]}" | sed -e 's/^gpgkey\s*=\|[,\\\r\n]/ /g')
 
   if test "${#gpg_keys[@]}" -eq 0; then
     return 1
@@ -304,7 +330,7 @@ get_gpg_keys() {
     local key_path
     for key_path in "${gpg_keys[@]}"; do
       # Filter-out '\'
-      if [ "${#key_path}" -gt 2 ]; then
+      if test "${#key_path}" -gt 2; then
         print_resource_by_path "$key_path"
         echo
       fi
@@ -348,71 +374,11 @@ get_repo_modules() {
 
   local module_file
   for module_file in "${module_paths[@]}"; do
-    # We only support the .yaml.gz extension, test for it here
-    case "$module_file" in
-      *.yaml.gz)
-        gunzip -kc "${repo_path}/${module_file}"
-        return 0
-        ;;
-      *.yaml.xz)
-        xz -kcd "${repo_path}/${module_file}"
-        return 0
-        ;;
-      *)
-        echo "Found unsupported module file ${module_file}" >&2
-        ;;
-    esac
+    if print_unpacked_file_content "${repo_path}/${module_file}" '\.xml$'; then
+      return 0
+    fi
   done
   return 1
-}
-
-## @fn get_repodata_data_relative_location_awk()
-## @copydoc get_repodata_data_relative_location()
-## @see get_repodata_data_relative_location()
-## @private
-get_repodata_data_relative_location_awk() {
-  local target_types="$1"
-  while test "$#" -gt 1; do
-    shift
-    target_types+="|${1}"
-  done
-  # shellcheck disable=SC2016
-  local group_search_awk_exp='/<data type="'"${target_types}"'">/{module=1} /<location/{if(module==1){print$2;module=0}}'
-  awk -F \" -e "$group_search_awk_exp"
-}
-
-## @fn get_repodata_data_relative_location_xmllint()
-## @copydoc get_repodata_data_relative_location()
-## @see get_repodata_data_relative_location()
-## @private
-get_repodata_data_relative_location_xmllint() {
-  # Drop namespaces from input files
-  local repomd_content
-  repomd_content="$(sed -Ee 's/\sxmlns(:[^=]*)?="[^"]*"//g')"
-  for target_item in "$@"; do
-    <<<"$repomd_content" xmllint --xpath "string(/repomd/data[@type=\"${target_item}\"]/location/@href)" -
-    # Add newline after match
-    echo
-  done
-}
-
-## @fn get_repodata_data_relative_location()
-## @brief Extract the location of a repodata file
-## @param types... Repodata attributes whose locations should be extracted
-## @note
-##   * $< The input file's content
-##   * $> The extracted locations
-get_repodata_data_relative_location() {
-  local used_filter
-
-  # If xmllint is available on the system, use it
-  if test "${USE_XMLLINT:-1}" -eq 0 || { test "${USE_AWK:-1}" -ne 0 && type xmllint >/dev/null 2>&1; }; then
-    used_filter=get_repodata_data_relative_location_xmllint
-  else
-    used_filter=get_repodata_data_relative_location_awk
-  fi
-
-  "$used_filter" "$@"
 }
 
 ## @fn get_repo_groups()
@@ -431,30 +397,11 @@ get_repo_groups() {
   group_paths="$(get_repodata_data_relative_location group group_gz <"${repo_path}/repodata/repomd.xml")"
 
   local group_file
-  local files_not_found=( )
   for group_file in $group_paths; do # We want the 'in' part to split on spaces
     # Ensure that we appropriatly handle the file found
-    if ! test -f "${repo_path}/${group_file}"; then
-      files_not_found+=( "$group_file" )
-      continue
+    if print_unpacked_file_content "${repo_path}/${group_file}" '\.xml$'; then
+      return 0
     fi
-    case "$group_file" in
-      *.xml)
-        cat "${repo_path}/${group_file}"
-        return 0
-        ;;
-      *.xml.gz)
-        gunzip -kc "${repo_path}/${group_file}"
-        return 0
-        ;;
-      *)
-        echo "Found unsupported group file ${group_file}" >&2
-        ;;
-    esac
   done
-
-  if test "${#files_not_found[@]}" -gt 0; then
-      echo "Could not find group file(s) in cache:" "${files_not_found[@]}" >&2
-  fi
   return 1
 }

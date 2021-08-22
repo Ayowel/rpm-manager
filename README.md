@@ -1,27 +1,21 @@
 # RPM Download Helper tool
 
-[![Release number](https://shields.io/github/v/release/Ayowel/rpm-manager)](https://github.com/Ayowel/rpm-manager/releases/latest) [![Worflow status](https://shields.io/github/workflow/status/Ayowel/rpm-manager/Main)](https://github.com/Ayowel/rpm-manager/actions)
+[![Release number](https://shields.io/github/v/release/Ayowel/rpm-manager)](https://github.com/Ayowel/rpm-manager/releases/latest) [![Worflow status](https://shields.io/github/workflow/status/Ayowel/rpm-manager/Main)](https://github.com/Ayowel/rpm-manager/actions) [![Coverage status](https://shields.io/codecov/c/github/Ayowel/rpm-manager)](https://codecov.io/github/Ayowel/rpm-manager/)
 
 ## Introduction
 
-This tool enables the full or partial download of enabled repositories' content while keeping track of the original repository's source.
-
-If you can afford to make a full repository clone and do not care about knowing which repository provides what feature, you should probably try to use wget or `dnf repoquery '*' | xargs dnf download` instead.
+This tool's aim is to assist in the creation of offline rpm repositories by enabling the download of all or part of the RPMs and other data associated with enabled rpm repositories.
 
 ## Usage
 
-### From a repository checkout
+The `dnf-command(download)` package MUST be installed on the system.
+For better reliability, it is recommanded that you install `libxml2`.
 
-```bash
-# Download all packages from all enabled local repositories
-./main.sh download
-# Download package 'bash' and its dependencies in 'rpms' directory
-./main.sh -R rpms download --package bash
-```
+Hereafter, commands are considered as executed from a released version installed in the path. The main result may be obtained from a repository clone by using `main.sh`
 
-### From a release
+### Repository download
 
-After downloading the release package and unpacking it in the path, you may start to use `rpm-manager` from anywhere on your system.
+Download rpms, gpg keys, modules and groups from all enabled repositories.
 
 ```bash
 # Download all packages from all enabled local repositories
@@ -30,60 +24,37 @@ rpm-manager download
 rpm-manager -R rpms download --package bash
 ```
 
-## Set-up an environment
+See `rpm-manager download --help` for more.
 
-* An environment with dnf support and the ability to install the `download` command
+### Repository groups introspection
 
-### Setting-up a Fedora/CentOS container
-
-* Start the container with a mount to this project (use only one of these commands)
+Get subgroups of an environment group.
 
 ```bash
-# On linux
-docker run --rm -itv "$(pwd):/mnt" fedora /bin/bash
-docker run --rm -itv "$(pwd):/mnt" centos /bin/bash
-# On windows
-docker run --rm -itv "%cd%:/mnt" fedora /bin/bash
-docker run --rm -itv "%cd%:/mnt" fedora /bin/bash
+# Get mandatory groups of an environment group
+rpm-manager group list -G mandatory Server
 ```
 
-* Install runtime dependencies
+Get packages of a group.
 
 ```bash
-dnf install -y  'dnf-command(download)' libxml2
+# Get required packages of mandatory groups of an environment group
+rpm-manager group packages -G mandatory,self -P default,mandatory Server
 ```
 
-### Setting-up a RedHat container
+See `rpm-manager group --help` for more
 
-If you do not have a registered RedHat host system, we recommend setting-up a redhat container:
+### Downloaded data consolidation
 
-* Start a RedHat container and register it
+Gather saved metadata in cohesive blocks
 
 ```bash
-# Download a base RedHat 8 image
-docker image pull registry.access.redhat.com/ubi8/ubi
-# Run a container and register with a valid RedHat account USERNAME & PASSWORD
-docker run --name registered_redhat -it registry.access.redhat.com/ubi8/ubi subscription-manager register --auto-attach --username USERNAME
-docker exec
-# Save the registered container
-docker commit registered_redhat registered_redhat_ubi
-# Cleanup
-docker container rm registered_redhat
+# Regroup groups of all directories in a single file
+rpm-manager consolidate group -o all_comps.xml */comps.xml
 ```
 
-* Run the new image
+See `rpm-manager consolidate --help` for more
 
-```bash
-# On linux
-docker run --rm -itv "$(pwd):/mnt" registered_redhat_ubi /bin/bash
-# On windows
-docker run --rm -itv "%cd%:/mnt" registered_redhat_ubi /bin/bash
-```
+## Contribute
 
-* Install runtime dependencies
-
-```bash
-dnf install -y  'dnf-command(download)' libxml2
-```
-
-*WARNING:* if you ever wish to permanently delete the image, run `docker run --rm -it registered_redhat_ubi subscription-manager unregister` first to ensure that the subscription for the container is removed from the associated account's redhat subscription list.
+We do not yet have contribution guidelines, but instructions on how to set-up a development environment are available [here](DEVELOPER.md).

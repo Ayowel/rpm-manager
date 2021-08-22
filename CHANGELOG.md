@@ -1,5 +1,25 @@
 # Changelog
 
+## Release Candidate
+
+This release is focused on ramping up unit tests and fixing issues discovered while doing so.
+
+### Features
+
+* Packages may now be provided without option to the 'download' command
+* Add downloaded file options `--gpg-subfile`, `--module-subfile`, and `--group-subfile
+* Download mode's `--package-file` now supports bash pipes usage (`<(my_command)`)
+* Huge performance improvement to download mode when not downloading RPM files
+
+### Fixes
+
+* Download mode's `--no-resolve` is now properly honored if it is set
+
+### Breaking changes
+
+* In `download` mode, `--rpm` and `--no-rpm` were renamed to `--rpms` and `--no-rpms`
+* When resolving cached datas, we now prioritize the current user's cache instead of the global cache
+
 ## Version 0.4.0
 
 ### Features
