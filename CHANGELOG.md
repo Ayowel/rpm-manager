@@ -1,6 +1,6 @@
 # Changelog
 
-## Release Candidate
+## Version 0.5.0
 
 This release is focused on ramping up unit tests and fixing issues discovered while doing so.
 
@@ -10,6 +10,7 @@ This release is focused on ramping up unit tests and fixing issues discovered wh
 * Add downloaded file options `--gpg-subfile`, `--module-subfile`, and `--group-subfile
 * Download mode's `--package-file` now supports bash pipes usage (`<(my_command)`)
 * Huge performance improvement to download mode when not downloading RPM files
+* Update shell-utilities dependency to `0.1.0`
 
 ### Fixes
 
