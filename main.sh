@@ -3,9 +3,9 @@
 ## START shell-utilities code inclusion
 ## This code is under MIT license
 # shellcheck disable=SC1091
-source vendors/shell-utilities/src/commons.sh
+source vendors/shell-utilities/commons.sh
 # shellcheck disable=SC1091
-source vendors/shell-utilities/src/argument_parser.sh
+source vendors/shell-utilities/argument_parser.sh
 ## END shell-utilities code inclusion
 
 source src/commons.sh

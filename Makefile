@@ -45,13 +45,10 @@ build:
 build/licenses:
 	mkdir -p $@
 
-build/licenses/shell-utilities.LICENSE: build/licenses
-	cp vendors/shell-utilities/LICENSE $@
-
 build/licenses/LICENSE: build/licenses
 	cp LICENSE $@
 
-licenses: build/licenses/LICENSE build/licenses/shell-utilities.LICENSE
+licenses: build/licenses/LICENSE
 
 build/rpm-manager: main.sh build
 	awk '{if($$1=="source"){system("cat "$$2); print "\n"}else{print $$0}}' '$<' >"$@"
