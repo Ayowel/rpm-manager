@@ -14,8 +14,8 @@ RUN dnf install -y epel-release && \
       unxz shellcheck.tar.xz && \
       tar -xvf shellcheck.tar --strip-components 1 -C /usr/bin && \
       rm -f shellcheck.tar && \
-      ln -sf /usr/lib64/libopcodes-2.30-93.el8.so /usr/lib64/libopcodes-2.30-system.so && \
-      ln -sf /usr/lib64/libbfd-2.30-93.el8.so /usr/lib64/libbfd-2.30-system.so && \
+      ln -sf /usr/lib64/libopcodes-2.30-*.el8.so /usr/lib64/libopcodes-2.30-system.so && \
+      ln -sf /usr/lib64/libbfd-2.30-*.el8.so /usr/lib64/libbfd-2.30-system.so && \
       curl -Lo kcov.tar.gz "$KCOV_SOURCE" && \
       tar -xvzf kcov.tar.gz -C / && \
       rm -f kcov.tar.gz && \
