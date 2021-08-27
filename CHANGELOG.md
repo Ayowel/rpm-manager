@@ -1,5 +1,15 @@
 # Changelog
 
+## Release Candidate
+
+### Features
+
+* The file provided with `--package-list` now supports writing comments with `#`
+
+### Fixes
+
+* Fix issue with multi-line package list files in download mode
+
 ## Version 0.5.0
 
 This release is focused on ramping up unit tests and fixing issues discovered while doing so.
@@ -7,7 +17,7 @@ This release is focused on ramping up unit tests and fixing issues discovered wh
 ### Features
 
 * Packages may now be provided without option to the 'download' command
-* Add downloaded file options `--gpg-subfile`, `--module-subfile`, and `--group-subfile
+* Add downloaded file options `--gpg-subfile`, `--module-subfile`, and `--group-subfile`
 * Download mode's `--package-file` now supports bash pipes usage (`<(my_command)`)
 * Huge performance improvement to download mode when not downloading RPM files
 * Update shell-utilities dependency to `0.1.0`

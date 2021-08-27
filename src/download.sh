@@ -183,8 +183,9 @@ post_parse_download() {
   local f
   local packages
   for f in "${DOWNLOAD_PACKAGE_LIST_FILES[@]}"; do
-    read -ra packages <"$f"
-    DOWNLOAD_PACKAGE_LIST+=( "${packages[@]}" )
+    while read -ra packages; do
+      DOWNLOAD_PACKAGE_LIST+=( "${packages[@]}" )
+    done < <(sed -e 's/#.*$//g' <"$f")
   done
   # Ensure that we're going to keep an output data or raise error
   for var in DOWNLOAD_RPMS DOWNLOAD_MODULES DOWNLOAD_GROUPS DOWNLOAD_GPGKEYS DOWNLOAD_KEEP_INTERMEDIATE_RESOLUTION_FILE; do

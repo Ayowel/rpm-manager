@@ -101,7 +101,12 @@ test_exclusive_download_check() {
 }
 
 @test "download - Downloading RPM files from a list in a file should work" {
-  run $manager download "${default_config[@]}" --rpms . --repo-subdirectory . --rpm-subdirectory . --package-file <(echo bash)
+  run $manager download "${default_config[@]}" --rpms . --repo-subdirectory . --rpm-subdirectory . --package-file <(cat - <<EOF
+git  httpd
+telnet gawk # bash
+sed
+EOF
+  )
   [ "$status" -eq 0 ]
   echo "$output" >&2
 
@@ -110,7 +115,8 @@ test_exclusive_download_check() {
   # We should only have downloaded one matching RPM
   local rpm_count
   rpm_count="$(find "$target_dir" -mindepth 1 -type f | wc -l)"
-  [ "$rpm_count" -eq 1 ]
+  find "$target_dir" -mindepth 1 -type f
+  [ "$rpm_count" -eq 5 ]
 }
 
 @test "download - Downloading RPMs with resolve enabled should download all required rpm files" {
