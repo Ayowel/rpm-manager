@@ -7,6 +7,7 @@ setup() {
   tmp_paths=( )
 
   export LANG=C.UTF-8
+  source vendors/shell-utilities/commons.sh
   source src/dnf_commons.sh
   dnf -q makecache
 }
@@ -48,7 +49,7 @@ teardown() {
   local target_repo
   local target_repo_cache_path
   local repomd_content
-  
+
   target_repo="$(get_repo_list | head -1)"
   target_repo_cache_path="$(get_repo_cache_path "$target_repo")"
   repomd_content="$(cat - <"${target_repo_cache_path}/repodata/repomd.xml")"
@@ -70,7 +71,7 @@ teardown() {
   local target_repo
   local target_repo_cache_path
   local repomd_content
-  
+
   target_repo="$(get_repo_list | head -1)"
   target_repo_cache_path="$(get_repo_cache_path "$target_repo")"
   repomd_content="$(cat - <"${target_repo_cache_path}/repodata/repomd.xml")"

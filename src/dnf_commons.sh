@@ -48,11 +48,8 @@ get_repodata_data_relative_location() {
 ## @see get_repodata_data_relative_location()
 ## @private
 get_repodata_data_relative_location_awk() {
-  local target_types="$1"
-  while test "$#" -gt 1; do
-    shift
-    target_types+="|${1}"
-  done
+  local target_types=
+  target_types="$(join_by '|' "$@")"
   # shellcheck disable=SC2016
   local group_search_awk_exp='/<data type="'"${target_types}"'">/{module=1} /<location/{if(module==1){print$2;module=0}}'
   awk -F \" -e "$group_search_awk_exp"
