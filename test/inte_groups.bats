@@ -80,5 +80,4 @@ setup() {
   run $manager group packages -P default "$group_name"
   [ "$status" -eq 0 ]
   [ "$output" = "$(cat "$group_default_output_file")" ]
-  
 }

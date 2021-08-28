@@ -55,7 +55,7 @@ print_unpacked_file_content() {
     return 1
   fi
 
-  if grep -qE "$raw_pattern" <<<"$target_file"; then
+  if test -n "$raw_pattern" && grep -qE "$raw_pattern" <<<"$target_file"; then
     cat "$target_file"
   else
     case "$target_file" in

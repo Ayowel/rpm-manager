@@ -109,3 +109,60 @@ teardown() {
   run print_resource_by_path "invalid_domain"
   [ "$status" -ne 0 ]
 }
+
+@test "print_unpacked_file_content fails on unsupported or unavailable file" {
+  tmp_paths=( "$(mktemp -d)" )
+  local tmp_dir="${tmp_paths[0]}"
+
+  # File does not exist
+  run print_unpacked_file_content "${tmp_dir}/undefined"
+  [ "$status" -ne 0 ]
+  grep 'Failed to access' <<<"$output"
+
+  # File exists but is not supported
+  echo 'Test file' >"${tmp_dir}/my_file.exe"
+  run print_unpacked_file_content "${tmp_dir}/my_file.exe"
+  [ "$status" -ne 0 ]
+  grep 'Unsupported file format' <<<"$output"
+}
+
+@test "print_unpacked_file_content supports gz files" {
+  if ! type gzip; then
+    skip
+  fi
+
+  tmp_paths=( "$(mktemp -d)" )
+  local target_path="${tmp_paths[0]}/test.gz"
+  local content="Test file"
+  gzip -c >"$target_path" <<<"$content"
+
+  run print_unpacked_file_content "$target_path"
+  [ "$status" -eq 0 ]
+  [ "$output" = "$content" ]
+}
+
+@test "print_unpacked_file_content supports xz files" {
+  if ! type xz; then
+    skip
+  fi
+
+  tmp_paths=( "$(mktemp -d)" )
+  local target_path="${tmp_paths[0]}/test.xz"
+  local content="Test file"
+  xz -cz >"$target_path" <<<"$content"
+
+  run print_unpacked_file_content "$target_path"
+  [ "$status" -eq 0 ]
+  [ "$output" = "$content" ]
+}
+
+@test "print_unpacked_file_content supports matching raw file paths" {
+  tmp_paths=( "$(mktemp -d)" )
+  local target_path="${tmp_paths[0]}/test.my_raw"
+  local content="Test file"
+  cat - >"$target_path" <<<"$content"
+
+  run print_unpacked_file_content "$target_path" 'my_raw$'
+  [ "$status" -eq 0 ]
+  [ "$output" = "$content" ]
+}

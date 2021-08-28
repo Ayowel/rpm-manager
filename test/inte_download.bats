@@ -52,7 +52,7 @@ test_exclusive_download_check() {
   [ "$status" -eq 0 ]
 
   test_exclusive_download_check "$target_dir" '/gpgkey_[^/]*$'
-  
+
   # Options make it so that there should be no subdirectory
   local dir_count
   dir_count="$(find "$target_dir" -mindepth 1 ! -type f | wc -l)"
@@ -64,7 +64,7 @@ test_exclusive_download_check() {
   [ "$status" -eq 0 ]
 
   test_exclusive_download_check "$target_dir" '/module_[^/]*\.yaml$'
-  
+
   # Options make it so that there should be no subdirectory
   local dir_count
   dir_count="$(find "$target_dir" -mindepth 1 ! -type f | wc -l)"
@@ -88,12 +88,12 @@ test_exclusive_download_check() {
   [ "$status" -eq 0 ]
 
   test_exclusive_download_check "$target_dir" '/[^/]*\.rpm$'
-  
+
   # We should only have downloaded one matching RPM
   local rpm_count
   rpm_count="$(find "$target_dir" -mindepth 1 -type f | wc -l)"
   [ "$rpm_count" -eq 1 ]
-  
+
   # Options make it so that there should be no subdirectory
   local dir_count
   dir_count="$(find "$target_dir" -mindepth 1 ! -type f | wc -l)"
@@ -108,15 +108,28 @@ sed
 EOF
   )
   [ "$status" -eq 0 ]
-  echo "$output" >&2
 
   test_exclusive_download_check "$target_dir" '/[^/]*\.rpm$'
-  
-  # We should only have downloaded one matching RPM
+
+  # We should have downloaded all RPMs taht are not commented-out
   local rpm_count
   rpm_count="$(find "$target_dir" -mindepth 1 -type f | wc -l)"
   find "$target_dir" -mindepth 1 -type f
   [ "$rpm_count" -eq 5 ]
+}
+
+@test "download - Generating a list of target RPMs should be supported" {
+  local resolved_items
+
+  run $manager download "${default_config[@]}" --repo-subdirectory . -k --resolved-rpms-file "${target_dir}/rpm_list" git telnet
+  [ "$status" -eq 0 ]
+  resolved_items="$(wc -l <"${target_dir}/rpm_list")"
+  [ "$resolved_items" -eq 2 ]
+
+  run $manager download "${default_config[@]}" --repo-subdirectory . --resolve -k --resolved-rpms-file "${target_dir}/rpm_list" git telnet
+  [ "$status" -eq 0 ]
+  resolved_items="$(wc -l <"${target_dir}/rpm_list")"
+  [ "$resolved_items" -gt 2 ]
 }
 
 @test "download - Downloading RPMs with resolve enabled should download all required rpm files" {
@@ -124,7 +137,7 @@ EOF
   [ "$status" -eq 0 ]
 
   test_exclusive_download_check "$target_dir" '/[^/]*\.rpm$'
-  
+
   # We should have downloaded one RPM
   # If more than one is found, assume we have them all
   local rpm_count

@@ -10,10 +10,27 @@ setup() {
   <<<"$output" grep -qE '^usage:'
 }
 
+@test "main - A module-specific help is provided without error when requested" {
+  run $manager --help
+  local base_output="$output"
+  [ "$status" -eq 0 ]
+  <<<"$output" grep -qE '^usage:'
+
+  run $manager consolidate --help
+  [ "$status" -eq 0 ]
+  [ "$ouput" != "$base_output" ]
+}
+
 @test "main - An error occurs when attempting to use a module that does not exist" {
   run $manager this_command_does_not_exist
   [ "$status" -ne 0 ]
   <<<"$output" grep -qE '^No valid mode used'
+}
+
+@test "main - An error occurs when attempting to use an unavailable path as generation root" {
+  run $manager -R /this/path/does/not/exist
+  [ "$status" -ne 0 ]
+  grep -q 'Received invalid execution directory path' <<<"$output"
 }
 
 @test "main - No error occurs when getting help with an invalid command" {
