@@ -69,32 +69,37 @@ post_parse_consolidate() {
   # Set default values
   CONSOLIDATE_OUTPUT_PATH="${CONSOLIDATE_OUTPUT_PATH:--}"
   if test "${#CONSOLIDATE_SOURCE_PATHS[@]}" -eq 0; then
+    echo "WARN: No consolidation source paths provided, current directory will be searched for candidates"
     CONSOLIDATE_SOURCE_PATHS=( . )
   fi
 
-  # Validate parameters
-  if test -z "$CONSOLIDATE_TARGET_TYPE"; then
-    # No target selected, abort
-    set_parse_error "No consolidation target received"
-    return 1
-  fi
+  local file_search_keys=( )
+  case "$CONSOLIDATE_TARGET_TYPE" in
+    group)
+      file_search_keys=( -name '*.xml' )
+      ;;
+    module)
+      file_search_keys=( -name '*.yaml' )
+      ;;
+    gpgkey)
+      file_search_keys=( -name 'gpgkey*' -o -name 'RPM-GPG-KEY-*' )
+      ;;
+    # This should be guarded by the check in parse_args
+    *) set_parse_error "Unsupported consolidation type $CONSOLIDATE_TARGET_TYPE. This should not happen"; return 1 ;;
+  esac
 
   local path
-  for path in "${CONSOLIDATE_SOURCE_PATHS[@]}"; do
-    # Ensure that all provided paths exist
-    if test -d "$path"; then
-      CONSOLIDATE_SOURCE_PATHS_VALIDATED+=( "$path" )
-    elif test -f "$path"; then
-      if { test "$CONSOLIDATE_TARGET_TYPE" == group && grep -qE '\.xml$' <<<"$path"
-          } || { test "$CONSOLIDATE_TARGET_TYPE" == module && grep -qE '\.yaml$' <<<"$path" ;} ; then
-        CONSOLIDATE_SOURCE_PATHS_VALIDATED+=( "$path" )
-      else
-        echo "File with unsupported name pattern will be ignored: $path" >&2
-      fi
-    else
-      set_parse_error "Received invalid source path '$path'"
-    fi
-  done
+  while read -rd '' path; do
+    CONSOLIDATE_SOURCE_PATHS_VALIDATED+=( "$path" )
+    test "$VERBOSE" -eq 0 && echo "USING $path"
+  done \
+  < <(
+    find -L "${CONSOLIDATE_SOURCE_PATHS[@]}" -maxdepth 0 -type f -readable -print0
+    find -L "${CONSOLIDATE_SOURCE_PATHS[@]}" -mindepth 1 -type f -readable "${file_search_keys[@]}" -print0
+  )
+  if test "${#CONSOLIDATE_SOURCE_PATHS_VALIDATED[@]}" -eq 0; then
+    set_parse_error 'No valid consolidation source file found'
+  fi
 }
 
 ## @fn main_consolidate()
@@ -115,8 +120,8 @@ main_consolidate() {
     gpgkey)
       consolidate_gpgkeys "${CONSOLIDATE_SOURCE_PATHS_VALIDATED[@]}" >&3
       ;;
-    *)
-      ;;
+    # This should be guarded by the check in parse_args
+    *) return 1 ;;
   esac
   exec 3>&-
 }
