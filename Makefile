@@ -5,7 +5,7 @@ BUILD_DIR=build
 all: audit doc-package package verify
 
 clean:
-	rm -rf build docs rpm-manager.tar.gz
+	rm -rf build docs coverage rpm-manager.tar.gz
 
 doc:
 	doxygen tools/Doxyfile
