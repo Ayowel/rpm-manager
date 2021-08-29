@@ -1,6 +1,6 @@
 # Changelog
 
-## Release Candidate
+## Version 0.5.1
 
 ### Features
 
@@ -9,6 +9,7 @@
 ### Fixes
 
 * Fix issue with multi-line package list files in download mode
+* Fix issue with the consolidation of GPG key files
 
 ## Version 0.5.0
 
