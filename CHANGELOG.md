@@ -1,5 +1,11 @@
 # Changelog
 
+## Release Candidate
+
+### Features
+
+* The download command now support filtering groups/packages with `--group-type` and `--package-type`
+
 ## Version 0.5.1
 
 ### Features

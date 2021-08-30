@@ -11,9 +11,9 @@ Group commands:
 
 Group options:
   --package-type|-P P  Desired package classification in the group
-                  One of: ${GROUP_VALID_PACKAGE_TYPES[@]}
+                  Space-sepaparated list of: ${GROUP_VALID_PACKAGE_TYPES[*]}
   --group-type|-G G    Desired group classification in the group
-                  One of: ${GROUP_VALID_GROUP_TYPES[@]}
+                  Space-separated list of: ${GROUP_VALID_GROUP_TYPES[*]}
                   Note: self will only match a group if it is not an environment group
 EOH
 }

@@ -10,6 +10,11 @@ Download options:
   --package-file FILE
                  Path to a file containing a list of desired packages
   --group        Name of a group whose packages should be downloaded
+  --package-type P  Desired package classification in a target groups
+                  Space-separated list of: all default mandatory optional
+  --group-type G Desired subgroups classification in the target groups
+                  Space-separated list of: all self mandatory optional
+                  Note: self will only match a group if it is not an environment group
   --history NUM  How many versions of a package should be downloaded if more
                    than one is available (defaults to 1)
   --[no-](modules|gpgkeys|groups|rpms)
@@ -60,6 +65,11 @@ init_download() {
   DOWNLOAD_GROUPS_FILE=
   DOWNLOAD_OLD_VERSION_LIMIT=1
   
+  DOWNLOAD_GROUPS_FILTER_GROUP=
+  DOWNLOAD_GROUPS_FILTER_GROUP_DEFAULT=all
+  DOWNLOAD_GROUPS_FILTER_RPM=
+  DOWNLOAD_GROUPS_FILTER_RPM_DEFAULT=all
+
   DOWNLOAD_PACKAGE_LIST_FILES=( )
   DOWNLOAD_PACKAGE_LIST=( )
   DOWNLOAD_GROUP_LIST=( )
@@ -108,6 +118,14 @@ parse_args_download() {
     --no-rpms)
       DOWNLOAD_RPMS=1
       return 1
+      ;;
+    --package-type)
+      DOWNLOAD_GROUPS_FILTER_RPM="$2"
+      return 2
+      ;;
+    --group-type)
+      DOWNLOAD_GROUPS_FILTER_GROUP="$2"
+      return 2
       ;;
     --download-repos)
       local download_repo_buffer
@@ -176,6 +194,9 @@ post_parse_download() {
   DOWNLOAD_GROUPS_FILE="${DOWNLOAD_GROUPS_FILE:-$DOWNLOAD_GROUPS_FILE_DEFAULT}"
   DOWNLOAD_GPG_FILE="${DOWNLOAD_GPG_FILE:-$DOWNLOAD_GPG_FILE_DEFAULT}"
 
+  DOWNLOAD_GROUPS_FILTER_GROUP="${DOWNLOAD_GROUPS_FILTER_GROUP:-$DOWNLOAD_GROUPS_FILTER_GROUP_DEFAULT}"
+  DOWNLOAD_GROUPS_FILTER_RPM="${DOWNLOAD_GROUPS_FILTER_RPM:-$DOWNLOAD_GROUPS_FILTER_RPM_DEFAULT}"
+
   if ! test "$DOWNLOAD_OLD_VERSION_LIMIT" -gt 0; then
     set_parse_error "The old version limit must be a positive number (received ${DOWNLOAD_OLD_VERSION_LIMIT})"
   fi
@@ -222,7 +243,7 @@ main_download() {
           printf "%s\n" "${DOWNLOAD_PACKAGE_LIST[@]}"
         fi
         if test "${#DOWNLOAD_GROUP_LIST[@]}" -ne 0; then
-          get_dnf_group_packages all all "${DOWNLOAD_GROUP_LIST[@]}"
+          get_dnf_group_packages "$DOWNLOAD_GROUPS_FILTER_GROUP" "$DOWNLOAD_GROUPS_FILTER_RPM" "${DOWNLOAD_GROUP_LIST[@]}"
         fi
       fi
     } | get_packages_list "$DOWNLOAD_RESOLVE" >"$tmp_file"
