@@ -11,7 +11,7 @@ This tool's aim is to assist in the creation of offline rpm repositories by enab
 The `dnf-command(download)` package MUST be installed on the system.
 For better reliability, it is recommanded that you install `libxml2`.
 
-Hereafter, commands are considered as executed from a released version installed in the path. The main result may be obtained from a repository clone by using `main.sh`
+Hereafter, commands are considered as executed from a released version installed in the PATH. The same result may be achieved from a repository clone by using `main.sh`
 
 ### Repository download
 
