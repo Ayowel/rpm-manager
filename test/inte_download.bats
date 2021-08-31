@@ -161,3 +161,52 @@ EOF
   rpm_count="$(find "$target_dir" -mindepth 1 -type f | wc -l)"
   [ "$rpm_count" -gt 1 ]
 }
+
+@test "download - Group download allows package type selection" {
+  run $manager download "${default_config[@]}" -k --resolved-rpms-file "${target_dir}/rpm_list_1" --group Core
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ "$(wc -l <"${target_dir}/rpm_list_1")" -gt 0 ]
+
+  run $manager download "${default_config[@]}" -k --resolved-rpms-file "${target_dir}/rpm_list_2" --group Core --package-type mandatory
+  [ "$status" -eq 0 ]
+  [ "$(wc -l <"${target_dir}/rpm_list_2")" -gt 0 ]
+  ! diff -q "${target_dir}/rpm_list_2" "${target_dir}/rpm_list_1"
+
+  run $manager download "${default_config[@]}" -k --resolved-rpms-file "${target_dir}/rpm_list_3" --group Core --package-type default
+  [ "$status" -eq 0 ]
+  [ "$(wc -l <"${target_dir}/rpm_list_2")" -gt 0 ]
+  ! diff -q "${target_dir}/rpm_list_3" "${target_dir}/rpm_list_1"
+  ! diff -q "${target_dir}/rpm_list_3" "${target_dir}/rpm_list_2"
+}
+
+@test "download - Group download allows group type selection" {
+  run $manager download "${default_config[@]}" -k --resolved-rpms-file "${target_dir}/rpm_list_1" --group 'Minimal Install'
+  echo "$output"
+  [ "$status" -eq 0 ]
+  [ "$(wc -l <"${target_dir}/rpm_list_1")" -gt 0 ]
+
+  run $manager download "${default_config[@]}" -k --resolved-rpms-file "${target_dir}/rpm_list_2" --group 'Minimal Install' --group-type mandatory
+  [ "$status" -eq 0 ]
+  [ "$(wc -l <"${target_dir}/rpm_list_2")" -gt 0 ]
+  ! diff -q "${target_dir}/rpm_list_2" "${target_dir}/rpm_list_1"
+
+  run $manager download "${default_config[@]}" -k --resolved-rpms-file "${target_dir}/rpm_list_3" --group 'Minimal Install' --group-type optional
+  [ "$status" -eq 0 ]
+  [ "$(wc -l <"${target_dir}/rpm_list_2")" -gt 0 ]
+  ! diff -q "${target_dir}/rpm_list_3" "${target_dir}/rpm_list_1"
+  ! diff -q "${target_dir}/rpm_list_3" "${target_dir}/rpm_list_2"
+}
+
+@test "download - Repositories with multiple gpgkeys have all of them downloaded (atomic)" {
+  if ! grep -q atomic < <(dnf repolist -q) || ! type gpg >/dev/null 2>&1; then
+    skip
+  fi
+
+  run $manager download "${default_config[@]}" --gpgkeys --repo-subdirectory . --gpg-subfile "gpgkey_%{REPO}" --download-repos atomic
+  [ "$status" -eq 0 ]
+  # Ensure that --download-repos is honored
+  [ "$(ls "${target_dir}" | wc -l)" -eq 1 ]
+  # Atomic repo uses 2 gpg keys
+  [ "$(LANG=C.utf-8 gpg --show-keys "${target_dir}/gpgkey_atomic" | grep -E '^pub' | wc -l)" -eq 2 ]
+}

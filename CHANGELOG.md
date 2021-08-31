@@ -9,6 +9,7 @@
 ### Fixes
 
 * Using `--history` to set a number of rpms versions to download now works as intended (was silently ignored)
+* Gpgkey download improvement when multiple key files are declared
 
 ## Version 0.5.1
 

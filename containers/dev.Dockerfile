@@ -8,7 +8,8 @@ ARG KCOV_VERSION=pre-v40
 ARG KCOV_SOURCE=https://github.com/SimonKagstrom/kcov/releases/download/${KCOV_VERSION}/kcov-amd64.tar.gz
 
 RUN dnf install -y epel-release && \
-      dnf install -y --enablerepo "$ENABLED_REPO" xz git make doxygen npm libxml2 binutils diffutils yamllint 'dnf-command(download)' && \
+      dnf install -y --enablerepo "$ENABLED_REPO" xz git make doxygen npm wget libxml2 binutils diffutils yamllint 'dnf-command(download)' && \
+      wget -q -O - https://updates.atomicorp.com/installers/atomic | NON_INT=true bash && \
       npm install --global bats && \
       curl -Lo shellcheck.tar.xz "${SHELLCHECK_SOURCE}" && \
       unxz shellcheck.tar.xz && \

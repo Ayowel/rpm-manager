@@ -289,14 +289,14 @@ main_download() {
       fi
 
       if test "$DOWNLOAD_GPGKEYS" -eq 0; then
-      local key_dir
-      local gpg_path="${DOWNLOAD_GPG_FILE//%\{REPO\}/$repo}"
-      key_dir="$(dirname "$gpg_path")"
-      test -d "$key_dir" || mkdir -p "$key_dir"
-      local gpg_keys
-      if gpg_keys="$(get_gpg_keys "$repo")"; then
-        cat - <<<"$gpg_keys" >"$gpg_path"
-      fi
+        local key_dir
+        local gpg_path="${DOWNLOAD_GPG_FILE//%\{REPO\}/$repo}"
+        key_dir="$(dirname "$gpg_path")"
+        test -d "$key_dir" || mkdir -p "$key_dir"
+        local gpg_keys
+        if gpg_keys="$(get_gpg_keys "$repo")"; then
+          cat - <<<"$gpg_keys" >"$gpg_path"
+        fi
       fi
     }
     popd >/dev/null || fatal "Failed to move out of $(pwd)" 3
@@ -338,13 +338,13 @@ get_gpg_keys() {
   # shellcheck disable=SC2016
   awk_parameters=(
     -e '/\s*\[.*\]/{a=0} /\s*\['"${repo_name}"'\]/{a=1}' # Search for the target repository's section
+    -e '/^.*[=\[\]]/{b=0}'                               # Disable attribute flag on new attribute or new repo definition
     -e '/gpgkey\s*=/{if(a)b=1}'                          # Set flag if at gpgkey attribute's line
     -e '{if(a && b)print $0}'                            # Print-out line content if on gpgkey
-    -e '{if(substr($0,length($0),1) != "\\")b=0}'        # Disable gpgkey flag unless line ends with '\'
     "$repo_file"
   )
   # Replace undesired values with spaces for proper array items detection
-  read -ra gpg_keys < <(awk "${awk_parameters[@]}" | sed -e 's/^gpgkey\s*=\|[,\\\r\n]/ /g')
+  read -d $'0' -ra gpg_keys < <(awk "${awk_parameters[@]}" | sed -Ee 's/^gpgkey\s*=\|[,\\]/ /g')
 
   if test "${#gpg_keys[@]}" -eq 0; then
     return 1
