@@ -6,6 +6,10 @@
 
 * The download command now support filtering groups/packages with `--group-type` and `--package-type`
 
+### Fixes
+
+* Using `--history` to set a number of rpms versions to download now works as intended (was silently ignored)
+
 ## Version 0.5.1
 
 ### Features

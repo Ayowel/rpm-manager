@@ -132,6 +132,23 @@ EOF
   [ "$resolved_items" -gt 2 ]
 }
 
+@test "download - Downloading more than one version of an RPM should work" {
+  # null and negative history should be rejected with an error
+  run $manager download "${default_config[@]}" -k --resolved-rpms-file "${target_dir}/rpm_list_0" --package bash --history 0
+  [ "${status}" -ne 0 ]
+  grep -q 'The old version limit must be a positive number' <<<"$output"
+
+  # Default history is 1
+  run $manager download "${default_config[@]}" -k --resolved-rpms-file "${target_dir}/rpm_list_1" --package bash
+  [ "${status}" -eq 0 ]
+  [ "$(wc -l <"${target_dir}/rpm_list_1")" -eq 1 ]
+
+  # Setting the history explicitly is honored
+  run $manager download "${default_config[@]}" -k --resolved-rpms-file "${target_dir}/rpm_list_3" --package bash --history 3
+  [ "${status}" -eq 0 ]
+  [ "$(wc -l <"${target_dir}/rpm_list_3")" -gt 1 ]
+}
+
 @test "download - Downloading RPMs with resolve enabled should download all required rpm files" {
   run $manager download "${default_config[@]}" --rpms . --repo-subdirectory . --rpm-subdirectory . --package bash --resolve
   [ "$status" -eq 0 ]

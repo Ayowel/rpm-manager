@@ -315,7 +315,7 @@ main_download() {
 get_packages_list() {
   local resolve="${1:-1}"
   local package_list
-  package_list="$(xargs -r dnf -q repoquery --latest-limit 1 --)"
+  package_list="$(xargs -r dnf -q repoquery --latest-limit "${DOWNLOAD_OLD_VERSION_LIMIT}" --)"
 
   {
     cat - <<<"$package_list"
