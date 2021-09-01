@@ -78,7 +78,7 @@ teardown() {
   fi
   local key_ids
   local finngerprint
-  key_ids="$(LANG=C.utf-8 gpg --show-keys "$out_file" | grep -vE '^[a-z]')"
+  key_ids="$(LANG=C.utf-8 gpg --no-options --show-keys "$out_file" | grep -vE '^[a-z]')"
   for fingerprint in "${expected_fingerprints[@]}"; do
     grep -q "$fingerprint" <<<"$key_ids"
   done

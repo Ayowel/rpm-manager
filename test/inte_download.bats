@@ -69,7 +69,7 @@ test_exclusive_download_check() {
   [ "${#key_file_list[@]}" -gt 0 ]
   for key_file in "${key_file_list[@]}"; do
     echo "$key_file"
-    LANG=C.utf-8 run gpg --show-keys "$key_file"
+    LANG=C.utf-8 run gpg --no-options --show-keys "$key_file"
     echo "$output"
     [ "$status" -eq 0 ]
     local key_count
@@ -227,5 +227,5 @@ EOF
   # Ensure that --download-repos is honored
   [ "$(ls "${target_dir}" | wc -l)" -eq 1 ]
   # Atomic repo uses 2 gpg keys
-  [ "$(LANG=C.utf-8 gpg --show-keys "${target_dir}/gpgkey_atomic" | grep -E '^pub' | wc -l)" -eq 2 ]
+  [ "$(LANG=C.utf-8 gpg --no-options --show-keys "${target_dir}/gpgkey_atomic" | grep -E '^pub' | wc -l)" -eq 2 ]
 }

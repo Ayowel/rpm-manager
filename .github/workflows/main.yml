@@ -20,7 +20,8 @@ jobs:
       - name: Prepare build container
         run: docker build --tag rpmmanager/dev --file containers/dev.Dockerfile  .
       - name: Build
-        run: "docker run --rm -e \"GNUPGHOME=$(mktemp -d)\" -v \"$(pwd):/mnt\" -u \"$(id -u ${USER}):$(id -g ${USER})\" rpmmanager/dev make all"
+        run: |
+          docker run --rm -e "GNUPGHOME=/tmp" -v "$(pwd):/mnt" -u "$(id -u ${USER}):$(id -g ${USER})" rpmmanager/dev make all
       - name: Save coverage
         uses: codecov/codecov-action@v1
         with:
