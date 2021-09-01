@@ -344,18 +344,15 @@ get_gpg_keys() {
     "$repo_file"
   )
   # Replace undesired values with spaces for proper array items detection
-  read -d $'0' -ra gpg_keys < <(awk "${awk_parameters[@]}" | sed -Ee 's/^gpgkey\s*=\|[,\\]/ /g')
+  read -d $'0' -ra gpg_keys < <(awk "${awk_parameters[@]}" | sed -Ee 's/^gpgkey\s*=|[,\\]/ /g')
 
   if test "${#gpg_keys[@]}" -eq 0; then
     return 1
   else
     local key_path
     for key_path in "${gpg_keys[@]}"; do
-      # Filter-out '\'
-      if test "${#key_path}" -gt 2; then
-        print_resource_by_path "$key_path"
-        echo
-      fi
+      print_resource_by_path "$key_path"
+      echo
     done
     return 0
   fi

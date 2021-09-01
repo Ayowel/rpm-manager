@@ -57,6 +57,25 @@ test_exclusive_download_check() {
   local dir_count
   dir_count="$(find "$target_dir" -mindepth 1 ! -type f | wc -l)"
   [ "$dir_count" -eq 0 ]
+
+  if ! type gpg >/dev/null 2>&1; then
+    skip
+  fi
+
+  # Ensure that all generated files contain GPG keys
+  local key_file
+  local key_file_list
+  key_file_list=( $(find "$target_dir" -type f -name 'gpgkey_*' -print) )
+  [ "${#key_file_list[@]}" -gt 0 ]
+  for key_file in "${key_file_list[@]}"; do
+    echo "$key_file"
+    LANG=C.utf-8 run gpg --show-keys "$key_file"
+    echo "$output"
+    [ "$status" -eq 0 ]
+    local key_count
+    key_count="$(<<<"$output" grep -E '^pub' | wc -l)"
+    [ "$key_count" -ge 1 ]
+  done
 }
 
 @test "download - Downloading module files works" {

@@ -1,5 +1,11 @@
 # Changelog
 
+## Release Candidate
+
+### Fixes
+
+* Fix gpgkey download for some file formats
+
 ## Version 0.5.2
 
 ### Features
