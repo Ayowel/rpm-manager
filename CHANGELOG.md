@@ -1,6 +1,6 @@
 # Changelog
 
-## Release Candidate
+## Version 0.5.3
 
 ### Fixes
 
