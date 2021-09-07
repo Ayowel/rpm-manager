@@ -31,7 +31,10 @@ print_resource_by_path() {
   if test -e "$path"; then
     cat "$path"
   elif grep -qE '^(https?|file)://' <<<"$path"; then
-    curl -s "$path"
+    if test "$INSECURE_MODE" -eq 0; then
+      local curl_opt=k
+    fi
+    curl "-sL${curl_opt}" "$path"
   else
     return 1
   fi

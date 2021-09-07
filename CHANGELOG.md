@@ -1,5 +1,15 @@
 # Changelog
 
+## Release Candidate
+
+### Features
+
+* Add a `--insecure` option to disable certificate validation when downloading resources. This option only affects in-script downloads, `ssverify=false` should still be added to your dnf configuration if desired
+
+### Fixes
+
+* gpgkey downloads now support redirects
+
 ## Version 0.5.3
 
 ### Fixes

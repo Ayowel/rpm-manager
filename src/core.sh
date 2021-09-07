@@ -15,6 +15,7 @@ Core options:
   -h|--help      Display this help message
   -R|--root-directory ROOT  Run from ROOT directory
   -v|--verbose   Enable verbose logging
+  --insecure     Disable certificate validation
 
 EOH
   if test -n "$SELECTED_MODE"; then
@@ -48,6 +49,7 @@ init() {
   MODE_SOURCES=( group download consolidate )
   SELECTED_MODE=
   TARGET_DIRECTORY=
+  INSECURE_MODE=1
 
   # Which parser to use when extracting information from xml files
   USE_XMLLINT=
@@ -82,6 +84,12 @@ parse_args() {
       ;;
     -v|--verbose)
       VERBOSE=0
+      return 1
+      ;;
+    --insecure)
+      # Set globally for valorisation in dependant scripts 
+      # shellcheck disable=SC2034
+      INSECURE_MODE=0
       return 1
       ;;
     --use-awk)

@@ -48,7 +48,7 @@ test_exclusive_download_check() {
 
 
 @test "download - Downloading gpg keys works" {
-  run $manager download "${default_config[@]}" --gpgkeys --repo-subdirectory . --gpg-subfile "gpgkey_%{REPO}"
+  run $manager download "${default_config[@]}" --gpgkeys --insecure --repo-subdirectory . --gpg-subfile "gpgkey_%{REPO}"
   [ "$status" -eq 0 ]
 
   test_exclusive_download_check "$target_dir" '/gpgkey_[^/]*$'
