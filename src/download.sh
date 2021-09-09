@@ -344,7 +344,7 @@ get_gpg_keys() {
     "$repo_file"
   )
   # Replace undesired values with spaces for proper array items detection
-  read -d $'0' -ra gpg_keys < <(awk "${awk_parameters[@]}" | sed -Ee 's/^gpgkey\s*=|[,\\]/ /g')
+  read -d $'\0' -ra gpg_keys < <(awk "${awk_parameters[@]}" | sed -Ee 's/^gpgkey\s*=|[,\\]/ /g')
 
   if test "${#gpg_keys[@]}" -eq 0; then
     return 1
