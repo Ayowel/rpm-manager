@@ -13,10 +13,10 @@ doc:
 audit: lint test
 
 lint:
-	shellcheck --shell bash main.sh src/*
+	shellcheck --shell bash rpm-manager.sh src/*
 
 test:
-	kcov --bash-dont-parse-binary-dir --include-path=src,main.sh coverage bats --tap test
+	kcov --bash-dont-parse-binary-dir --include-path=src,rpm-manager.sh coverage bats --tap test
 
 verify: build/rpm-manager
 	MANAGER=$< bats --tap test/inte_*.bats
@@ -50,5 +50,5 @@ build/licenses/LICENSE: build/licenses
 
 licenses: build/licenses/LICENSE
 
-build/rpm-manager: main.sh build
+build/rpm-manager: rpm-manager.sh build
 	awk '{if($$1=="source"){system("cat "$$2); print "\n"}else{print $$0}}' '$<' >"$@"
