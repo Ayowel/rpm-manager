@@ -22,9 +22,7 @@ In most cases, no. You should only use-this if all of the following are true:
 ## Usage
 
 The `dnf-command(download)` package MUST be installed on the system.
-For better reliability, it is recommanded that you install `libxml2`.
-
-Hereafter, commands are considered as executed from a released version installed in the PATH. The same result may be achieved from a repository clone by using `main.sh`
+`libxml2` SHOULD be installed on the system for maximum reliability.
 
 ### Repository download
 

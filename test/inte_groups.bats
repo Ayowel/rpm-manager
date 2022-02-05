@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 setup() {
-  manager="${MANAGER:-bash ./main.sh}"
+  manager="${MANAGER:-bash ./rpm-manager.sh}"
 }
 
 @test "group - Attempting to use an unsupported group mode or option returns an error" {

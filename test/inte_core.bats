@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 setup() {
-  manager="${MANAGER:-bash ./main.sh}"
+  manager="${MANAGER:-bash ./rpm-manager.sh}"
 }
 
 @test "main - A help is provided without error when requested" {

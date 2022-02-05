@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 setup() {
-  manager="${MANAGER:-bash ./main.sh}"
+  manager="${MANAGER:-bash ./rpm-manager.sh}"
   tmp_paths=( "$(mktemp -d)" )
   target_dir="${tmp_paths[0]}"
 
