@@ -1,7 +1,7 @@
-ARG BASE_IMAGE=centos
+ARG BASE_IMAGE=rockylinux:8
 FROM $BASE_IMAGE
 
-RUN dnf install -y xz libxml2 diffutils 'dnf-command(download)' && \
+RUN dnf install -y xz libxml2 diffutils findutils 'dnf-command(download)' && \
       dnf clean all
 
 COPY --chown=0:0 build/rpm-manager /bin/rpm-manager

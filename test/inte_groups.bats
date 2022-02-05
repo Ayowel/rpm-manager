@@ -17,30 +17,30 @@ setup() {
   [ "$status" -eq 0 ]
   # Only test some known-defined groups
   local group_name
-  for group_name in Core 'Printing Client'; do
+  for group_name in core print-client; do
     grep -qE "^${group_name}\$" <<<"$output"
   done
 }
 
 @test "group list - It is possible to list group members of a group" {
   local group_name='Minimal Install'
-  local group_mandatory_output_file='test/resources/groups_group_list_MinimalInstall_mandatory'
-  local group_all_output_file='test/resources/groups_group_list_MinimalInstall_default'
+  local group_mandatory_output=core
+  local group_all_output="$(printf 'Guest Agents\ncore\nstandard')"
 
   # Attempt to list all groups in environment with default flag
   run $manager group list "$group_name"
   [ "$status" -eq 0 ]
-  [ "$output" = "$(cat "$group_all_output_file")" ]
+  [ "$output" = "$group_all_output" ]
 
   # Attempt to list all groups in environment with all flag
   run $manager group list -G all "$group_name"
   [ "$status" -eq 0 ]
-  [ "$output" = "$(cat "$group_all_output_file")" ]
+  [ "$output" = "$group_all_output" ]
 
   # Attempt to list all mandatory groups in environment
   run $manager group list -G mandatory "$group_name"
   [ "$status" -eq 0 ]
-  [ "$output" = "$(cat "$group_mandatory_output_file")" ]
+  [ "$output" = "$group_mandatory_output" ]
 }
 
 @test "group list - Only base groups should match the self filter" {
@@ -50,19 +50,19 @@ setup() {
   [ "${#lines[@]}" -eq 0 ]
 
   # Ensure that we can list the Core group itself as it is a group
-  run $manager group list -G self "Core"
+  run $manager group list -G self "core"
   [ "$status" -eq 0 ]
-  [ "$output" = "Core" ]
+  [ "$output" = "core" ]
 }
 
 @test "group list - Invalid groups filters are detected and return an error" {
   # Ensure that using an unsupported flag throws an error
-  run $manager group list -G unsupported "Core"
+  run $manager group list -G unsupported "core"
   [ "$status" -ne 0 ]
 }
 
 @test "group packages - It is possible to list package members of a group" {
-  local group_name='Core'
+  local group_name='core'
   local group_default_output_file='test/resources/groups_group_packages_Core_default'
   local group_all_output_file='test/resources/groups_group_packages_Core_all'
 

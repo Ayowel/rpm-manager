@@ -152,6 +152,9 @@ EOF
 }
 
 @test "download - Downloading more than one version of an RPM should work" {
+  # FIXME: This can't be tested for anymore with rockylinux repositories at the moment
+  skip
+
   # null and negative history should be rejected with an error
   run $manager download "${default_config[@]}" -k --resolved-rpms-file "${target_dir}/rpm_list_0" --package bash --history 0
   [ "${status}" -ne 0 ]
@@ -164,6 +167,29 @@ EOF
 
   # Setting the history explicitly is honored
   run $manager download "${default_config[@]}" -k --resolved-rpms-file "${target_dir}/rpm_list_3" --package bash --history 3
+  [ "${status}" -eq 0 ]
+  [ "$(wc -l <"${target_dir}/rpm_list_3")" -gt 1 ]
+}
+
+@test "download - Downloading more than one version of an RPM should work (atomic)" {
+  if ! grep -q atomic < <(dnf repolist -q) || ! type gpg >/dev/null 2>&1; then
+    skip
+  fi
+
+  package=ossec-hids
+  # null and negative history should be rejected with an error
+  run $manager download "${default_config[@]}" -k --resolved-rpms-file "${target_dir}/rpm_list_0" --package "$package" --history 0
+  [ "${status}" -ne 0 ]
+  grep -q 'The old version limit must be a positive number' <<<"$output"
+
+  # Default history is 1
+  run $manager download "${default_config[@]}" -k --resolved-rpms-file "${target_dir}/rpm_list_1" --package "$package"
+  [ "${status}" -eq 0 ]
+  [ "$(wc -l <"${target_dir}/rpm_list_1")" -eq 1 ]
+
+  # gdbm-devel
+  # Setting the history explicitly is honored
+  run $manager download "${default_config[@]}" -k --resolved-rpms-file "${target_dir}/rpm_list_3" --package "$package" --history 3
   [ "${status}" -eq 0 ]
   [ "$(wc -l <"${target_dir}/rpm_list_3")" -gt 1 ]
 }
@@ -221,6 +247,8 @@ EOF
   if ! grep -q atomic < <(dnf repolist -q) || ! type gpg >/dev/null 2>&1; then
     skip
   fi
+  # FIXME: atomic does not have two gpg keys anymore, find another repo to test this
+  skip
 
   run $manager download "${default_config[@]}" --gpgkeys --repo-subdirectory . --gpg-subfile "gpgkey_%{REPO}" --download-repos atomic
   [ "$status" -eq 0 ]

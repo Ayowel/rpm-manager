@@ -24,5 +24,6 @@ lshw
 lsscsi
 microcode_ctl
 prefixdevname
+rhc
 sg3_utils
 sg3_utils-libs
