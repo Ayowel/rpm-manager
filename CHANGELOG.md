@@ -1,5 +1,11 @@
 # Changelog
 
+## Release Candidate
+
+### Development
+
+* Migrate integration and development containers to rockylinux
+
 ## Version 0.5.4
 
 ### Features

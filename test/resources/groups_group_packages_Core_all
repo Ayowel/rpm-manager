@@ -59,6 +59,7 @@ policycoreutils
 prefixdevname
 procps-ng
 rdma-core
+rhc
 rootfiles
 rpm
 rsyslog
