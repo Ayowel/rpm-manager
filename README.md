@@ -17,7 +17,7 @@ In most cases, no. You should only use-this if all of the following are true:
   * [Nexus](https://fr.sonatype.com/products/repository-oss)
   * [Squid](http://www.squid-cache.org/)
 * Yum cache is not enough for your needs. See [yum's caching instructions](http://yum.baseurl.org/wiki/YumMultipleMachineCaching.html) 
-* You have limited disk space in-house (otherwise, use `wget -r` on the repositories you need to create full clones)
+* You have limited disk space in-house (otherwise, use `dnf reposync` or `wget -r` on the repositories you need to create full clones)
 
 ## Usage
 
