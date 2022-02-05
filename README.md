@@ -6,6 +6,19 @@
 
 This tool's aim is to assist in the creation of offline rpm repositories by enabling the download of all or part of the RPMs and other data associated with enabled rpm repositories.
 
+## Should I use this ?
+
+In most cases, no. You should only use-this if all of the following are true:
+
+* One or more of your workstations/servers does not have access to the internet / to remote repositories
+* You can't set-up a repository proxy server or a cache server. Some existing solutions:
+  * [RedHat Satellite](https://www.redhat.com/en/technologies/management/satellite)
+  * [Pulp](http://www.pulpproject.org/)
+  * [Nexus](https://fr.sonatype.com/products/repository-oss)
+  * [Squid](http://www.squid-cache.org/)
+* Yum cache is not enough for your needs. See [yum's caching instructions](http://yum.baseurl.org/wiki/YumMultipleMachineCaching.html) 
+* You have limited disk space in-house (otherwise, use `wget -r` on the repositories you need to create full clones)
+
 ## Usage
 
 The `dnf-command(download)` package MUST be installed on the system.
